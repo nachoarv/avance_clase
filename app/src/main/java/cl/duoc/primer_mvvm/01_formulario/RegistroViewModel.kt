@@ -1,51 +1,76 @@
 package cl.duoc.primer_mvvm.`01_formulario`
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class RegistroViewModel : ViewModel() {
 
-    var uiState by mutableStateOf(RegistroUiState())
-        private set
+    private val _uiState = MutableStateFlow(RegistroUiState())
+    val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
 
-    fun onNombreChange(nombre: String) {
-        uiState = uiState.copy(nombre = nombre)
+    fun cambiarNombre(nuevoNombre: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(nombre = nuevoNombre)
+        }
     }
 
-    fun onApellidoChange(apellido: String) {
-        uiState = uiState.copy(apellido = apellido)
+    fun cambiarApellido(nuevoApellido: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(apellido = nuevoApellido)
+        }
     }
 
-    fun onFechaNacimientoChange(fecha: String) {
-        uiState = uiState.copy(fechaNacimiento = fecha)
+    fun cambiarFechaNacimiento(nuevaFecha: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(fechaNacimiento = nuevaFecha)
+        }
     }
 
-    fun onCorreoChange(correo: String) {
-        uiState = uiState.copy(correo = correo)
+    fun cambiarCorreo(nuevoCorreo: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(correo = nuevoCorreo)
+        }
     }
 
-    fun onPasswordChange(password: String) {
-        uiState = uiState.copy(password = password)
+    fun cambiarPassword(nuevoPassword: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(password = nuevoPassword)
+        }
     }
 
-    fun onRepetirPasswordChange(repetirPassword: String) {
-        uiState = uiState.copy(repetirPassword = repetirPassword)
+    fun cambiarRepetirPassword(nuevoRepetirPassword: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(repetirPassword = nuevoRepetirPassword)
+        }
     }
 
-    fun cambiarAceptaTerminos(value: Boolean) {
-        uiState = uiState.copy(aceptaTerminos = value)
+    fun cambiarTerminos(nuevoTerminos: Boolean) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(aceptaTerminos = nuevoTerminos)
+        }
     }
+
+    // Funciones alias para mantener compatibilidad
+    fun onNombreChange(nombre: String) = cambiarNombre(nombre)
+    fun onApellidoChange(apellido: String) = cambiarApellido(apellido)
+    fun onFechaNacimientoChange(fecha: String) = cambiarFechaNacimiento(fecha)
+    fun onCorreoChange(correo: String) = cambiarCorreo(correo)
+    fun onPasswordChange(password: String) = cambiarPassword(password)
+    fun onRepetirPasswordChange(repetirPassword: String) = cambiarRepetirPassword(repetirPassword)
+    fun cambiarAceptaTerminos(value: Boolean) = cambiarTerminos(value)
 
     fun registrar() {
-        val errNombre = !validarNombre(uiState.nombre)
-        val errApellido = !validarApellido(uiState.apellido)
-        val errFecha = !validarFechaNacimiento(uiState.fechaNacimiento)
-        val errCorreo = !validarCorreo(uiState.correo)
-        val errPassword = !validarPassword(uiState.password)
-        val errRepetirPassword = !passwordsCoinciden(uiState.password, uiState.repetirPassword)
-        val errTerminos = !uiState.aceptaTerminos
+        val estado = _uiState.value
+        val errNombre = !validarNombre(estado.nombre)
+        val errApellido = !validarApellido(estado.apellido)
+        val errFecha = !validarFechaNacimiento(estado.fechaNacimiento)
+        val errCorreo = !validarCorreo(estado.correo)
+        val errPassword = !validarPassword(estado.password)
+        val errRepetirPassword = !passwordsCoinciden(estado.password, estado.repetirPassword)
+        val errTerminos = !estado.aceptaTerminos
 
         val formularioValido = !errNombre &&
                 !errApellido &&
@@ -55,16 +80,18 @@ class RegistroViewModel : ViewModel() {
                 !errRepetirPassword &&
                 !errTerminos
 
-        uiState = uiState.copy(
-            errorNombre = errNombre,
-            errorApellido = errApellido,
-            errorFechaNacimiento = errFecha,
-            errorCorreo = errCorreo,
-            errorPassword = errPassword,
-            errorRepetirPassword = errRepetirPassword,
-            errorTerminos = errTerminos,
-            mensajeExito = formularioValido,
-        )
+        _uiState.update { estadoActual ->
+            estadoActual.copy(
+                errorNombre = errNombre,
+                errorApellido = errApellido,
+                errorFechaNacimiento = errFecha,
+                errorCorreo = errCorreo,
+                errorPassword = errPassword,
+                errorRepetirPassword = errRepetirPassword,
+                errorTerminos = errTerminos,
+                mensajeExito = formularioValido
+            )
+        }
 
         if (formularioValido) {
             println("Usuario registrado correctamente")
