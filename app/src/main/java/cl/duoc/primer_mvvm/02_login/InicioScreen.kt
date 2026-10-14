@@ -1,21 +1,129 @@
 package cl.duoc.primer_mvvm.`02_login`
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InicioScreen(
     usuario: String,
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    var perfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showOpcionesFotoDialog by remember { mutableStateOf(false) }
+
+    // Launcher para la Cámara
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            perfilBitmap = bitmap
+        }
+    }
+
+    // Launcher para la Galería (Photo Picker)
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    val source = ImageDecoder.createSource(context.contentResolver, uri)
+                    ImageDecoder.decodeBitmap(source)
+                } else {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    BitmapFactory.decodeStream(inputStream)
+                }
+                perfilBitmap = bitmap
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // Diálogo para elegir origen de la imagen
+    if (showOpcionesFotoDialog) {
+        AlertDialog(
+            onDismissRequest = { showOpcionesFotoDialog = false },
+            title = { Text("Foto de Perfil") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            showOpcionesFotoDialog = false
+                            cameraLauncher.launch(null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Tomar foto con la cámara")
+                    }
+
+                    TextButton(
+                        onClick = {
+                            showOpcionesFotoDialog = false
+                            galleryLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Seleccionar de la galería")
+                    }
+
+                    if (perfilBitmap != null) {
+                        TextButton(
+                            onClick = {
+                                perfilBitmap = null
+                                showOpcionesFotoDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Eliminar foto actual", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showOpcionesFotoDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -23,18 +131,58 @@ fun InicioScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Usuario",
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        // Avatar con icono de edición
+        Box(
+            contentAlignment = Alignment.BottomEnd,
+            modifier = Modifier.clickable { showOpcionesFotoDialog = true }
+        ) {
+            if (perfilBitmap != null) {
+                Image(
+                    bitmap = perfilBitmap!!.asImageBitmap(),
+                    contentDescription = "Foto de perfil",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Usuario sin foto",
+                    modifier = Modifier.size(120.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            // Indicador / Botón flotante para cambiar foto
+            SmallFloatingActionButton(
+                onClick = { showOpcionesFotoDialog = true },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                shape = CircleShape,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Cambiar foto",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = { showOpcionesFotoDialog = true }) {
+            Text("Cambiar foto de perfil")
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "¡Sesión Iniciada!",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(8.dp))
