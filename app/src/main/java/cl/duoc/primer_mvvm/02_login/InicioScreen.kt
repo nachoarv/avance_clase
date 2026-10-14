@@ -1,10 +1,13 @@
 package cl.duoc.primer_mvvm.`02_login`
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +50,35 @@ fun InicioScreen(
     ) { bitmap: Bitmap? ->
         if (bitmap != null) {
             perfilBitmap = bitmap
+        }
+    }
+
+    // Launcher para solicitar Permiso de Cámara
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            cameraLauncher.launch(null)
+        } else {
+            Toast.makeText(
+                context,
+                "Se requiere permiso de cámara para tomar la foto",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    // Función auxiliar para verificar y solicitar permiso
+    val solicitarPermisoAbrirCamara = {
+        val tienePermiso = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (tienePermiso) {
+            cameraLauncher.launch(null)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -79,7 +112,7 @@ fun InicioScreen(
                     TextButton(
                         onClick = {
                             showOpcionesFotoDialog = false
-                            cameraLauncher.launch(null)
+                            solicitarPermisoAbrirCamara()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
