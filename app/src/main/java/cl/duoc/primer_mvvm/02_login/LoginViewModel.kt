@@ -5,10 +5,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
+data class CuentaPrueba(
+    val correo: String,
+    val password: String,
+    val nombre: String,
+    val rol: String
+)
+
 class LoginViewModel : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
+
+    private val cuentasPrueba = listOf(
+        CuentaPrueba("supervisor@empresa.cl", "Password123", "Sofía Supervisor", "Supervisor Comercial"),
+        CuentaPrueba("ejecutivo1@empresa.cl", "Password123", "Juan Pérez", "Ejecutivo Comercial"),
+        CuentaPrueba("ejecutivo2@empresa.cl", "Password123", "María Soto", "Ejecutivo Comercial"),
+        CuentaPrueba("ejecutivo3@empresa.cl", "Password123", "Carlos Gómez", "Ejecutivo Comercial")
+    )
 
     fun onCorreoChange(correo: String) {
         uiState = uiState.copy(correo = correo, errorCorreo = false, mensajeError = null)
@@ -18,15 +32,34 @@ class LoginViewModel : ViewModel() {
         uiState = uiState.copy(password = password, errorPassword = false, mensajeError = null)
     }
 
-    fun iniciarSesion(onSuccess: (String) -> Unit) {
-        val errCorreo = uiState.correo.isBlank() || !uiState.correo.contains("@")
-        val errPassword = uiState.password.length < 8
+    fun iniciarSesion(onSuccess: (String, String) -> Unit) {
+        val correoInput = uiState.correo.trim()
+        val passwordInput = uiState.password.trim()
+
+        val cuenta = cuentasPrueba.find { it.correo.equals(correoInput, ignoreCase = true) }
+
+        if (cuenta != null) {
+            if (cuenta.password == passwordInput) {
+                uiState = uiState.copy(mensajeError = null, mostrarOpcionCambiarPassword = false)
+                onSuccess(cuenta.nombre, cuenta.rol)
+            } else {
+                uiState = uiState.copy(
+                    errorPassword = true,
+                    mensajeError = "Contraseña incorrecta para ${cuenta.correo}",
+                    mostrarOpcionCambiarPassword = true
+                )
+            }
+            return
+        }
+
+        val errCorreo = correoInput.isBlank() || !correoInput.contains("@")
+        val errPassword = passwordInput.length < 8
 
         if (errCorreo || errPassword) {
             uiState = uiState.copy(
                 errorCorreo = errCorreo,
                 errorPassword = errPassword,
-                mensajeError = if (errPassword) "Contraseña incorrecta (debe tener al menos 8 caracteres)" else "Por favor, ingrese un correo válido",
+                mensajeError = if (errPassword) "Contraseña incorrecta (mínimo 8 caracteres) o cuenta no registrada" else "Por favor, ingrese un correo válido",
                 mostrarOpcionCambiarPassword = errPassword
             )
             return
@@ -36,7 +69,7 @@ class LoginViewModel : ViewModel() {
             mensajeError = null,
             mostrarOpcionCambiarPassword = false
         )
-        onSuccess(uiState.correo)
+        onSuccess(uiState.correo, "Ejecutivo Comercial")
     }
 
     fun abrirDialogoCambiarPassword() {

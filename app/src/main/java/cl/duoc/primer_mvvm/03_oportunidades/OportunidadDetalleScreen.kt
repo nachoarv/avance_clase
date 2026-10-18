@@ -1,5 +1,6 @@
 package cl.duoc.primer_mvvm.`03_oportunidades`
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.duoc.primer_mvvm.model.*
@@ -22,12 +24,14 @@ import cl.duoc.primer_mvvm.model.*
 fun OportunidadDetalleScreen(
     oportunidadId: String,
     uiState: OportunidadesUiState,
+    rol: String = "Ejecutivo Comercial",
     onVolver: () -> Unit,
     onCambiarEstado: (EstadoOportunidad) -> Unit,
     onAgregarSeguimiento: (String, TipoAccionSeguimiento, String, String, String, String) -> Unit,
     onRegistrarResultado: (String, Int, Int, Int, Int, String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val oportunidad = uiState.oportunidades.find { it.id == oportunidadId }
     val evento = uiState.eventos.find { it.oportunidadId == oportunidadId }
     val organizacion = uiState.organizaciones.find { it.id == evento?.organizacionId }
@@ -76,14 +80,30 @@ fun OportunidadDetalleScreen(
             text = {
                 Column {
                     EstadoOportunidad.entries.forEach { estado ->
+                        val esRestringido = rol == "Ejecutivo Comercial" && (
+                            estado == EstadoOportunidad.PARTICIPACION_CONFIRMADA ||
+                            estado == EstadoOportunidad.OPORTUNIDAD_DESCARTADA
+                        )
+
                         TextButton(
                             onClick = {
-                                onCambiarEstado(estado)
-                                showDialogCambiarEstado = false
+                                if (esRestringido) {
+                                    Toast.makeText(
+                                        context,
+                                        "Restricción de rol: Los ejecutivos comerciales no pueden confirmar ni descartar oportunidades. Acción reservada para Supervisor.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } else {
+                                    onCambiarEstado(estado)
+                                    showDialogCambiarEstado = false
+                                }
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(estado.label)
+                            Text(
+                                text = if (esRestringido) "${estado.label} (Requiere Supervisor)" else estado.label,
+                                color = if (esRestringido) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }

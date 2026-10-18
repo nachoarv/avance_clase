@@ -1,5 +1,6 @@
 package cl.duoc.primer_mvvm
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,15 +40,18 @@ class MainActivity : ComponentActivity() {
 fun MainApp() {
     var isLoggedIn by remember { mutableStateOf(false) }
     var usuarioActual by remember { mutableStateOf("") }
+    var rolActual by remember { mutableStateOf("Ejecutivo Comercial") }
     var selectedAuthTab by remember { mutableIntStateOf(0) }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         if (isLoggedIn) {
             MainDashboardApp(
                 usuario = usuarioActual,
+                rol = rolActual,
                 onCerrarSesion = {
                     isLoggedIn = false
                     usuarioActual = ""
+                    rolActual = "Ejecutivo Comercial"
                     selectedAuthTab = 0
                 },
                 modifier = Modifier.padding(innerPadding)
@@ -73,8 +77,9 @@ fun MainApp() {
 
                 when (selectedAuthTab) {
                     0 -> LoginScreen(
-                        onLoginExitoso = { usuario ->
+                        onLoginExitoso = { usuario, rol ->
                             usuarioActual = usuario
+                            rolActual = rol
                             isLoggedIn = true
                         },
                         onIrARegistro = { selectedAuthTab = 1 }
@@ -83,6 +88,7 @@ fun MainApp() {
                         onIrALogin = { selectedAuthTab = 0 },
                         onRegistroExitoso = { usuario ->
                             usuarioActual = usuario
+                            rolActual = "Ejecutivo Comercial"
                             isLoggedIn = true
                         }
                     )
@@ -95,12 +101,14 @@ fun MainApp() {
 @Composable
 fun MainDashboardApp(
     usuario: String,
+    rol: String,
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OportunidadesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var currentNavDestination by remember { mutableIntStateOf(0) } // 0: Lista, 1: Alertas, 2: Nueva, 3: Perfil
+    var perfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -161,6 +169,7 @@ fun MainDashboardApp(
                 OportunidadDetalleScreen(
                     oportunidadId = selId,
                     uiState = uiState,
+                    rol = rol,
                     onVolver = { viewModel.seleccionarOportunidad(null) },
                     onCambiarEstado = { nuevoEstado ->
                         viewModel.actualizarEstadoOportunidad(selId, nuevoEstado)
@@ -203,7 +212,10 @@ fun MainDashboardApp(
                     )
                     3 -> InicioScreen(
                         usuario = usuario,
-                        onCerrarSesion = onCerrarSesion
+                        rol = rol,
+                        onCerrarSesion = onCerrarSesion,
+                        perfilBitmap = perfilBitmap,
+                        onPerfilBitmapChange = { perfilBitmap = it }
                     )
                 }
             }

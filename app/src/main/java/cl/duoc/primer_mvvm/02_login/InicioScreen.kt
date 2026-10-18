@@ -15,7 +15,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
@@ -37,11 +39,13 @@ import androidx.core.content.ContextCompat
 @Composable
 fun InicioScreen(
     usuario: String,
+    rol: String,
     onCerrarSesion: () -> Unit,
+    perfilBitmap: Bitmap?,
+    onPerfilBitmapChange: (Bitmap?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var perfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showOpcionesFotoDialog by remember { mutableStateOf(false) }
 
     // Launcher para la Cámara
@@ -49,7 +53,7 @@ fun InicioScreen(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
         if (bitmap != null) {
-            perfilBitmap = bitmap
+            onPerfilBitmapChange(bitmap)
         }
     }
 
@@ -95,7 +99,7 @@ fun InicioScreen(
                     val inputStream = context.contentResolver.openInputStream(uri)
                     BitmapFactory.decodeStream(inputStream)
                 }
-                perfilBitmap = bitmap
+                onPerfilBitmapChange(bitmap)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -138,7 +142,7 @@ fun InicioScreen(
                     if (perfilBitmap != null) {
                         TextButton(
                             onClick = {
-                                perfilBitmap = null
+                                onPerfilBitmapChange(null)
                                 showOpcionesFotoDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -160,6 +164,7 @@ fun InicioScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -169,9 +174,10 @@ fun InicioScreen(
             contentAlignment = Alignment.BottomEnd,
             modifier = Modifier.clickable { showOpcionesFotoDialog = true }
         ) {
-            if (perfilBitmap != null) {
+            val currentBitmap = perfilBitmap
+            if (currentBitmap != null) {
                 Image(
-                    bitmap = perfilBitmap!!.asImageBitmap(),
+                    bitmap = currentBitmap.asImageBitmap(),
                     contentDescription = "Foto de perfil",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -225,6 +231,21 @@ fun InicioScreen(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Surface(
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = CircleShape
+        ) {
+            Text(
+                text = "Rol: $rol",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 

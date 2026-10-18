@@ -16,7 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = viewModel(),
-    onLoginExitoso: (String) -> Unit,
+    onLoginExitoso: (String, String) -> Unit,
     onIrARegistro: () -> Unit
 ) {
     val uiState = viewModel.uiState
