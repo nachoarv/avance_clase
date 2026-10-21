@@ -22,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,12 +36,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import cl.duoc.primer_mvvm.`03_oportunidades`.OportunidadesUiState
+import cl.duoc.primer_mvvm.model.EstadoOportunidad
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InicioScreen(
     usuario: String,
     rol: String,
+    uiState: OportunidadesUiState,
     onCerrarSesion: () -> Unit,
     perfilBitmap: Bitmap?,
     onPerfilBitmapChange: (Bitmap?) -> Unit,
@@ -247,7 +252,117 @@ fun InicioScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        var showDialogConfirmadas by remember { mutableStateOf(false) }
+        var showDialogHistorial by remember { mutableStateOf(false) }
+
+        if (showDialogConfirmadas) {
+            val confirmadas = uiState.oportunidades.filter {
+                it.estado == EstadoOportunidad.PARTICIPACION_CONFIRMADA || it.estado == EstadoOportunidad.ACTIVACION_REALIZADA
+            }
+            AlertDialog(
+                onDismissRequest = { showDialogConfirmadas = false },
+                title = { Text("Oportunidades Confirmadas") },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (confirmadas.isEmpty()) {
+                            Text("No hay oportunidades confirmadas actualmente.")
+                        } else {
+                            confirmadas.forEach { op ->
+                                Card(modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(op.nombre, fontWeight = FontWeight.Bold)
+                                        Text("Estado: ${op.estado.label}", style = MaterialTheme.typography.bodySmall)
+                                        Text("Responsable: ${op.responsableInterno}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showDialogConfirmadas = false }) {
+                        Text("Cerrar")
+                    }
+                }
+            )
+        }
+
+        if (showDialogHistorial) {
+            val misSeguimientos = uiState.seguimientos.filter {
+                it.usuarioResponsable.contains(usuario, ignoreCase = true) || usuario.isBlank()
+            }
+            val misOportunidades = uiState.oportunidades.filter {
+                it.responsableInterno.contains(usuario, ignoreCase = true)
+            }
+
+            AlertDialog(
+                onDismissRequest = { showDialogHistorial = false },
+                title = { Text("Historial de Actividad") },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Oportunidades a cargo (${misOportunidades.size}):", fontWeight = FontWeight.Bold)
+                        if (misOportunidades.isEmpty()) {
+                            Text("Ninguna registrada.", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            misOportunidades.forEach { op ->
+                                Text("• ${op.nombre} (${op.estado.label})", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Gestiones y Seguimientos (${misSeguimientos.size}):", fontWeight = FontWeight.Bold)
+                        if (misSeguimientos.isEmpty()) {
+                            Text("Ningún seguimiento registrado.", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            misSeguimientos.forEach { seg ->
+                                Text("• [${seg.fechaHora}] ${seg.tipoAccion.label}: ${seg.resultado}", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showDialogHistorial = false }) {
+                        Text("Cerrar")
+                    }
+                }
+            )
+        }
+
+        OutlinedButton(
+            onClick = { showDialogConfirmadas = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.CheckCircle, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Ver Confirmaciones")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = { showDialogHistorial = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.History, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Mi Historial de Creaciones y Gestiones")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = onCerrarSesion,

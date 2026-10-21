@@ -213,6 +213,7 @@ fun MainDashboardApp(
                     3 -> InicioScreen(
                         usuario = usuario,
                         rol = rol,
+                        uiState = uiState,
                         onCerrarSesion = onCerrarSesion,
                         perfilBitmap = perfilBitmap,
                         onPerfilBitmapChange = { perfilBitmap = it }
