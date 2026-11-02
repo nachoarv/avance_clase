@@ -1,10 +1,13 @@
 package cl.duoc.primer_mvvm.`01_formulario`
 
 import androidx.lifecycle.ViewModel
+import cl.duoc.primer_mvvm.data.UsuarioRepository
+import cl.duoc.primer_mvvm.model.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 class RegistroViewModel : ViewModel() {
 
@@ -94,7 +97,17 @@ class RegistroViewModel : ViewModel() {
         }
 
         if (formularioValido) {
-            println("Usuario registrado correctamente")
+            val nuevoUsuario = Usuario(
+                id = UUID.randomUUID().toString(),
+                correo = estado.correo.trim(),
+                password = estado.password,
+                nombre = estado.nombre.trim(),
+                apellido = estado.apellido.trim(),
+                rol = "Ejecutivo Comercial",
+                fechaNacimiento = estado.fechaNacimiento
+            )
+            UsuarioRepository.agregarUsuario(nuevoUsuario)
+            println("Usuario registrado correctamente: ${nuevoUsuario.correo}")
         } else {
             println("Error en el formulario")
         }

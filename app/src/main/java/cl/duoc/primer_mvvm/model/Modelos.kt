@@ -36,6 +36,21 @@ enum class TipoAlerta(val label: String) {
     PROPUESTA_SIN_RESPUESTA("Propuesta sin respuesta")
 }
 
+data class Usuario(
+    val id: String,
+    val correo: String,
+    val password: String,
+    val nombre: String,
+    val apellido: String = "",
+    val rol: String = "Ejecutivo Comercial",
+    val fechaNacimiento: String = "",
+    val activo: Boolean = true
+) {
+    fun nombreCompleto(): String {
+        return if (apellido.isNotBlank()) "$nombre $apellido".trim() else nombre
+    }
+}
+
 data class Oportunidad(
     val id: String,
     val nombre: String,

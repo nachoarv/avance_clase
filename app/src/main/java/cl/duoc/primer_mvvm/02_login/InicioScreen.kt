@@ -21,9 +21,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import cl.duoc.primer_mvvm.`03_oportunidades`.OportunidadesUiState
+import cl.duoc.primer_mvvm.data.UsuarioRepository
 import cl.duoc.primer_mvvm.model.EstadoOportunidad
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +55,15 @@ fun InicioScreen(
 ) {
     val context = LocalContext.current
     var showOpcionesFotoDialog by remember { mutableStateOf(false) }
+    var showDialogGestionUsuarios by remember { mutableStateOf(false) }
+
+    val esAdminOSupervisor = UsuarioRepository.esAdminOSupervisor(rol, usuario)
+
+    if (showDialogGestionUsuarios) {
+        GestionUsuariosDialog(
+            onDismissRequest = { showDialogGestionUsuarios = false }
+        )
+    }
 
     // Launcher para la Cámara
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -253,6 +265,58 @@ fun InicioScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        // SECCIÓN EXCLUSIVA DE GESTIÓN PARA ADMIN / SUPERVISOR
+        if (esAdminOSupervisor) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AdminPanelSettings,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Panel de Administración",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Gestione cuentas de usuario, modifique contraseñas y roles del sistema.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { showDialogGestionUsuarios = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.ManageAccounts, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Gestión de Usuarios (Admin)")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         var showDialogConfirmadas by remember { mutableStateOf(false) }
         var showDialogHistorial by remember { mutableStateOf(false) }
