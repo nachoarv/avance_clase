@@ -292,7 +292,8 @@ fun MainDashboardApp(
                             uiState = uiState,
                             onCerrarSesion = onCerrarSesion,
                             perfilBitmap = perfilBitmap,
-                            onPerfilBitmapChange = { perfilBitmap = it }
+                            onPerfilBitmapChange = { perfilBitmap = it },
+                            onVerOportunidad = { opId -> viewModel.seleccionarOportunidad(opId) }
                         )
                     }
                 }

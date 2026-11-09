@@ -1,4 +1,4 @@
-// #gestion_usuarios #admin #cambio_clave #roles #desactivar_usuario #eliminar_usuario #kpi_metricas #animacion #kpi_contador #staggered_enter
+// #gestion_usuarios #admin #cambio_clave #roles #desactivar_usuario #eliminar_usuario #kpi_metricas #animacion #editar_oportunidad_admin
 package cl.duoc.primer_mvvm.ui.auth
 
 import android.widget.Toast
@@ -25,22 +25,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import cl.duoc.primer_mvvm.data.OportunidadRepository
 import cl.duoc.primer_mvvm.data.UsuarioRepository
+import cl.duoc.primer_mvvm.model.Oportunidad
+import cl.duoc.primer_mvvm.model.Prioridad
 import cl.duoc.primer_mvvm.model.Usuario
 import java.util.UUID
 
 /**
- * #gestion_usuarios #admin #roles #cambio_clave #desactivar_usuario #eliminar_usuario #animacion
- * Panel de administración completo para gestión de cuentas con contadores y entradas animadas.
+ * #gestion_usuarios #admin #roles #editar_oportunidad_admin #animacion
+ * Panel de administración para gestión de usuarios y modificación de oportunidades comerciales para el Supervisor/Admin.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GestionUsuariosDialog(
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    onVerOportunidad: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val usuariosList by UsuarioRepository.usuarios.collectAsState()
+    val oportunidadesList by OportunidadRepository.oportunidades.collectAsState()
+    val eventosList by OportunidadRepository.eventos.collectAsState()
 
+    var selectedAdminTab by remember { mutableIntStateOf(0) } // 0: Usuarios, 1: Oportunidades
+
+    // Variables para la pestaña de usuarios
     var textoBusqueda by remember { mutableStateOf("") }
     var filtroRolSeleccionado by remember { mutableStateOf("Todos") } // Todos, Admin, Supervisor, Ejecutivo, Inactivos
 
@@ -71,17 +80,35 @@ fun GestionUsuariosDialog(
     var nuevoRol by remember { mutableStateOf("Ejecutivo Comercial") }
     var errorCreacion by remember { mutableStateOf<String?>(null) }
 
-    // Cálculo de Métricas KPI del Admin
+    // Variables para la pestaña de modificación de oportunidades desde Admin
+    var busquedaOportunidadAdmin by remember { mutableStateOf("") }
+    var oportunidadEditarAdmin by remember { mutableStateOf<Oportunidad?>(null) }
+    var editOpNombre by remember { mutableStateOf("") }
+    var editOpTipo by remember { mutableStateOf("") }
+    var editOpDesc by remember { mutableStateOf("") }
+    var editOpFuente by remember { mutableStateOf("") }
+    var editOpPrioridad by remember { mutableStateOf(Prioridad.ALTA) }
+    var editOpPotencial by remember { mutableStateOf("Alto") }
+    var editOpEventoNombre by remember { mutableStateOf("") }
+    var editOpFechaInicio by remember { mutableStateOf("") }
+    var editOpFechaTermino by remember { mutableStateOf("") }
+    var editOpHorario by remember { mutableStateOf("") }
+    var editOpDireccion by remember { mutableStateOf("") }
+    var editOpComuna by remember { mutableStateOf("") }
+    var editOpRegion by remember { mutableStateOf("") }
+    var editOpAsistentes by remember { mutableStateOf("500") }
+    var editOpObs by remember { mutableStateOf("") }
+
+    // Métricas KPI de usuarios
     val totalCuentas = usuariosList.size
     val totalActivos = usuariosList.count { it.activo }
     val totalInactivos = usuariosList.count { !it.activo }
 
-    // #animacion #kpi_contador - Conteo numérico animado para las métricas
     val animTotal by animateIntAsState(targetValue = totalCuentas, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "TotalKpiAnim")
     val animActivos by animateIntAsState(targetValue = totalActivos, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "ActivosKpiAnim")
     val animInactivos by animateIntAsState(targetValue = totalInactivos, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "InactivosKpiAnim")
 
-    // Filtrado dinámico
+    // Filtrado de usuarios
     val usuariosFiltrados = usuariosList.filter { u ->
         val coincideTexto = u.nombre.contains(textoBusqueda, ignoreCase = true) ||
                 u.apellido.contains(textoBusqueda, ignoreCase = true) ||
@@ -99,6 +126,159 @@ fun GestionUsuariosDialog(
         }
 
         coincideTexto && coincideFiltroRol
+    }
+
+    // Filtrado de oportunidades en el panel Admin
+    val oportunidadesFiltradasAdmin = oportunidadesList.filter { op ->
+        val ev = eventosList.find { it.oportunidadId == op.id }
+        busquedaOportunidadAdmin.isBlank() ||
+                op.nombre.contains(busquedaOportunidadAdmin, ignoreCase = true) ||
+                op.responsableInterno.contains(busquedaOportunidadAdmin, ignoreCase = true) ||
+                op.tipo.contains(busquedaOportunidadAdmin, ignoreCase = true) ||
+                (ev?.nombre?.contains(busquedaOportunidadAdmin, ignoreCase = true) == true)
+    }
+
+    // #dialogo #editar_oportunidad_admin - Modal de modificación de oportunidad desde el panel Admin/Supervisor
+    if (oportunidadEditarAdmin != null) {
+        val targetOp = oportunidadEditarAdmin!!
+        AlertDialog(
+            onDismissRequest = { oportunidadEditarAdmin = null },
+            icon = { Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Modificar Oportunidad (Supervisor)") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    Text("Responsable: ${targetOp.responsableInterno}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+
+                    OutlinedTextField(
+                        value = editOpNombre,
+                        onValueChange = { editOpNombre = it },
+                        label = { Text("Nombre Oportunidad") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editOpTipo,
+                        onValueChange = { editOpTipo = it },
+                        label = { Text("Tipo Oportunidad") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editOpDesc,
+                        onValueChange = { editOpDesc = it },
+                        label = { Text("Descripción") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editOpFuente,
+                        onValueChange = { editOpFuente = it },
+                        label = { Text("Fuente Información") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editOpPotencial,
+                        onValueChange = { editOpPotencial = it },
+                        label = { Text("Potencial Comercial") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text("Prioridad:", fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Prioridad.entries.forEach { p ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = editOpPrioridad == p, onClick = { editOpPrioridad = p })
+                                Text(p.name, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+
+                    HorizontalDivider()
+                    Text("Datos del Evento", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                    OutlinedTextField(
+                        value = editOpEventoNombre,
+                        onValueChange = { editOpEventoNombre = it },
+                        label = { Text("Nombre del Evento") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = editOpFechaInicio,
+                            onValueChange = { editOpFechaInicio = it },
+                            label = { Text("Fecha Inicio") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = editOpFechaTermino,
+                            onValueChange = { editOpFechaTermino = it },
+                            label = { Text("Fecha Término") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = editOpHorario,
+                        onValueChange = { editOpHorario = it },
+                        label = { Text("Horario") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editOpDireccion,
+                        onValueChange = { editOpDireccion = it },
+                        label = { Text("Dirección") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = editOpComuna,
+                            onValueChange = { editOpComuna = it },
+                            label = { Text("Comuna") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = editOpRegion,
+                            onValueChange = { editOpRegion = it },
+                            label = { Text("Región") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = editOpAsistentes,
+                        onValueChange = { editOpAsistentes = it },
+                        label = { Text("Asistentes Estimados") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editOpObs,
+                        onValueChange = { editOpObs = it },
+                        label = { Text("Observaciones") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            // #boton #guardar_edicion_admin - Guarda las modificaciones realizadas por Supervisor/Admin
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (editOpNombre.isBlank()) return@Button
+                        OportunidadRepository.actualizarOportunidadCompleta(
+                            targetOp.id, editOpNombre, editOpTipo, editOpDesc, editOpFuente,
+                            editOpPrioridad, editOpPotencial, editOpEventoNombre, editOpFechaInicio, editOpFechaTermino,
+                            editOpHorario, editOpDireccion, editOpComuna, editOpRegion, editOpAsistentes.toIntOrNull() ?: 500, editOpObs
+                        )
+                        Toast.makeText(context, "Oportunidad modificada por el Supervisor", Toast.LENGTH_SHORT).show()
+                        oportunidadEditarAdmin = null
+                    }
+                ) {
+                    Text("Guardar Cambios")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { oportunidadEditarAdmin = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     // #dialogo #editar_usuario - Diálogo para editar perfil completo del usuario
@@ -446,7 +626,7 @@ fun GestionUsuariosDialog(
         )
     }
 
-    // Modal Principal de Gestión de Usuarios
+    // Modal Principal de Gestión Admin/Supervisor
     AlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = Modifier
@@ -454,297 +634,450 @@ fun GestionUsuariosDialog(
             .fillMaxHeight(0.92f),
         properties = DialogProperties(usePlatformDefaultWidth = false),
         title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.AdminPanelSettings,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.AdminPanelSettings,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Panel de Administración",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // #tab #panel_admin - Pestañas para cambiar entre Gestión de Cuentas y Modificación de Oportunidades
+                TabRow(selectedTabIndex = selectedAdminTab) {
+                    Tab(
+                        selected = selectedAdminTab == 0,
+                        onClick = { selectedAdminTab = 0 },
+                        text = { Text("Cuentas ($totalCuentas)") }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Panel de Administración",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                    Tab(
+                        selected = selectedAdminTab == 1,
+                        onClick = { selectedAdminTab = 1 },
+                        text = { Text("Oportunidades (${oportunidadesList.size})") }
                     )
                 }
             }
         },
         text = {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // #kpi_metricas #animacion #kpi_contador - Bloque de tarjetas KPI con contadores animables
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                        modifier = Modifier
-                            .weight(1f)
-                            .animateContentSize()
+            // #animacion #tabs_admin - Transición animada entre gestión de usuarios y modificación de oportunidades
+            AnimatedContent(
+                targetState = selectedAdminTab,
+                label = "AdminTabsAnimation"
+            ) { tab ->
+                if (tab == 0) {
+                    // PESTAÑA 0: GESTIÓN DE USUARIOS
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("$animTotal", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("Total", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .animateContentSize()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("$animActivos", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = Color(0xFF2E7D32))
-                            Text("Activos", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .animateContentSize()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("$animInactivos", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-                            Text("Inactivos", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-
-                // #campo_texto #buscador - Campo para filtrar la lista de usuarios por texto
-                OutlinedTextField(
-                    value = textoBusqueda,
-                    onValueChange = { textoBusqueda = it },
-                    placeholder = { Text("Buscar usuario, correo, cargo o área...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // #filtros #admin - Chips de filtro rápido por rol y estado
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val opciones = listOf("Todos", "Ejecutivo", "Supervisor", "Admin", "Inactivos")
-                    items(opciones) { opt ->
-                        FilterChip(
-                            selected = filtroRolSeleccionado == opt,
-                            onClick = { filtroRolSeleccionado = opt },
-                            label = { Text(opt, style = MaterialTheme.typography.labelSmall) }
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Resultados: ${usuariosFiltrados.size}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // #boton #nuevo_usuario - Botón para desplegar el modal de nuevo usuario
-                    Button(
-                        onClick = {
-                            errorCreacion = null
-                            mostrarCrearUsuarioDialog = true
-                        },
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Nuevo Usuario", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-
-                HorizontalDivider()
-
-                // #lista #usuarios #staggered_enter - Renderizado con entrada animada de tarjetas
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    itemsIndexed(usuariosFiltrados, key = { _, u -> u.id }) { index, u ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(animationSpec = tween(280, delayMillis = index * 40)) +
-                                    slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(280, delayMillis = index * 40)),
-                            label = "UserCardEnter"
-                        ) {
-                            ElevatedCard(
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateContentSize(),
-                                colors = CardDefaults.elevatedCardColors(
-                                    containerColor = if (!u.activo)
-                                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
-                                    else if (UsuarioRepository.esAdminOSupervisor(u.rol, u.correo))
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                    else MaterialTheme.colorScheme.surface
-                                )
+                                    .weight(1f)
+                                    .animateContentSize()
                             ) {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp)
+                                    modifier = Modifier.padding(8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                    Text("$animTotal", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                                    Text("Total", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .animateContentSize()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text("$animActivos", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = Color(0xFF2E7D32))
+                                    Text("Activos", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .animateContentSize()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text("$animInactivos", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                                    Text("Inactivos", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = textoBusqueda,
+                            onValueChange = { textoBusqueda = it },
+                            placeholder = { Text("Buscar usuario, correo, cargo...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val opciones = listOf("Todos", "Ejecutivo", "Supervisor", "Admin", "Inactivos")
+                            items(opciones) { opt ->
+                                FilterChip(
+                                    selected = filtroRolSeleccionado == opt,
+                                    onClick = { filtroRolSeleccionado = opt },
+                                    label = { Text(opt, style = MaterialTheme.typography.labelSmall) }
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Resultados: ${usuariosFiltrados.size}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Button(
+                                onClick = {
+                                    errorCreacion = null
+                                    mostrarCrearUsuarioDialog = true
+                                },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Nuevo Usuario", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        HorizontalDivider()
+
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            itemsIndexed(usuariosFiltrados, key = { _, u -> u.id }) { index, u ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn(animationSpec = tween(280, delayMillis = index * 40)) +
+                                            slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(280, delayMillis = index * 40)),
+                                    label = "UserCardEnter"
+                                ) {
+                                    ElevatedCard(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .animateContentSize(),
+                                        colors = CardDefaults.elevatedCardColors(
+                                            containerColor = if (!u.activo)
+                                                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+                                            else if (UsuarioRepository.esAdminOSupervisor(u.rol, u.correo))
+                                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                            else MaterialTheme.colorScheme.surface
+                                        )
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(
-                                                    text = u.nombreCompleto(),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                // Badge de Estado Activo / Inactivo
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(
+                                                            text = u.nombreCompleto(),
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Surface(
+                                                            color = if (u.activo) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer,
+                                                            shape = RoundedCornerShape(8.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = if (u.activo) "Activo" else "Inactivo",
+                                                                color = if (u.activo) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                    Text(
+                                                        text = u.correo,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    Text(
+                                                        text = "${u.cargo} • ${u.departamento}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.outline
+                                                    )
+                                                }
+
                                                 Surface(
-                                                    color = if (u.activo) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer,
-                                                    shape = RoundedCornerShape(8.dp)
+                                                    color = if (UsuarioRepository.esAdminOSupervisor(u.rol, u.correo))
+                                                        MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.secondaryContainer,
+                                                    contentColor = if (UsuarioRepository.esAdminOSupervisor(u.rol, u.correo))
+                                                        MaterialTheme.colorScheme.onPrimary
+                                                    else MaterialTheme.colorScheme.onSecondaryContainer,
+                                                    shape = RoundedCornerShape(16.dp)
                                                 ) {
                                                     Text(
-                                                        text = if (u.activo) "Activo" else "Inactivo",
-                                                        color = if (u.activo) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        text = u.rol,
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                                     )
                                                 }
                                             }
-                                            Text(
-                                                text = u.correo,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                            Text(
-                                                text = "${u.cargo} • ${u.departamento}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.outline
-                                            )
-                                            Text(
-                                                text = "Teléfono: ${u.telefono}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.outline
-                                            )
-                                        }
 
-                                        Surface(
-                                            color = if (UsuarioRepository.esAdminOSupervisor(u.rol, u.correo))
-                                                MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = if (UsuarioRepository.esAdminOSupervisor(u.rol, u.correo))
-                                                MaterialTheme.colorScheme.onPrimary
-                                            else MaterialTheme.colorScheme.onSecondaryContainer,
-                                            shape = RoundedCornerShape(16.dp)
-                                        ) {
-                                            Text(
-                                                text = u.rol,
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            HorizontalDivider()
+                                            Spacer(modifier = Modifier.height(6.dp))
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(
+                                                        text = if (u.activo) "Cuenta activa" else "Desactivada",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = if (u.activo) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Switch(
+                                                        checked = u.activo,
+                                                        onCheckedChange = {
+                                                            UsuarioRepository.toggleEstadoUsuario(u.correo)
+                                                            val msg = if (!u.activo) "Cuenta de ${u.nombre} activada" else "Cuenta de ${u.nombre} desactivada"
+                                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                                        },
+                                                        modifier = Modifier.scale(0.8f)
+                                                    )
+                                                }
+
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    IconButton(
+                                                        onClick = {
+                                                            editNombre = u.nombre
+                                                            editApellido = u.apellido
+                                                            editTelefono = u.telefono
+                                                            editCargo = u.cargo
+                                                            editDepartamento = u.departamento
+                                                            usuarioEditarPerfil = u
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Edit, contentDescription = "Editar datos", modifier = Modifier.size(18.dp))
+                                                    }
+
+                                                    IconButton(
+                                                        onClick = {
+                                                            nuevoRolSeleccionado = u.rol
+                                                            usuarioEditarRol = u
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.AdminPanelSettings, contentDescription = "Cambiar Rol", modifier = Modifier.size(18.dp))
+                                                    }
+
+                                                    IconButton(
+                                                        onClick = {
+                                                            nuevaPasswordText = ""
+                                                            errorPasswordText = null
+                                                            usuarioEditarPassword = u
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Key, contentDescription = "Cambiar Contraseña", modifier = Modifier.size(18.dp))
+                                                    }
+
+                                                    IconButton(
+                                                        onClick = { usuarioEliminar = u },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar Usuario", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // PESTAÑA 1: GESTIÓN Y MODIFICACIÓN DE OPORTUNIDADES POR SUPERVISOR / ADMIN
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = busquedaOportunidadAdmin,
+                            onValueChange = { busquedaOportunidadAdmin = it },
+                            placeholder = { Text("Buscar oportunidad, evento o responsable...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    HorizontalDivider()
-                                    Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Supervisión Comercial (${oportunidadesFiltradasAdmin.size} oportunidades)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                        HorizontalDivider()
+
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            itemsIndexed(oportunidadesFiltradasAdmin, key = { _, op -> op.id }) { index, op ->
+                                val ev = eventosList.find { it.oportunidadId == op.id }
+
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn(animationSpec = tween(280, delayMillis = index * 40)) +
+                                            slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(280, delayMillis = index * 40)),
+                                    label = "OpAdminCardEnter"
+                                ) {
+                                    ElevatedCard(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .animateContentSize()
                                     ) {
-                                        // #switch #desactivar_usuario - Interruptor rápido para activar / suspender cuenta
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = if (u.activo) "Cuenta activa" else "Desactivada",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (u.activo) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Switch(
-                                                checked = u.activo,
-                                                onCheckedChange = {
-                                                    UsuarioRepository.toggleEstadoUsuario(u.correo)
-                                                    val msg = if (!u.activo) "Cuenta de ${u.nombre} activada" else "Cuenta de ${u.nombre} desactivada"
-                                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                                },
-                                                modifier = Modifier.scale(0.8f)
-                                            )
-                                        }
-
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            // #boton #editar_usuario - Botón para abrir modal de edición de perfil
-                                            IconButton(
-                                                onClick = {
-                                                    editNombre = u.nombre
-                                                    editApellido = u.apellido
-                                                    editTelefono = u.telefono
-                                                    editCargo = u.cargo
-                                                    editDepartamento = u.departamento
-                                                    usuarioEditarPerfil = u
-                                                },
-                                                modifier = Modifier.size(32.dp)
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Icon(Icons.Default.Edit, contentDescription = "Editar datos", modifier = Modifier.size(18.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = op.nombre,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = "Evento: ${ev?.nombre ?: op.nombre} (${ev?.comuna ?: "Santiago"})",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    Text(
+                                                        text = "Responsable: ${op.responsableInterno}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                }
+
+                                                Surface(
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    color = MaterialTheme.colorScheme.secondaryContainer
+                                                ) {
+                                                    Text(
+                                                        text = op.estado.label,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                    )
+                                                }
                                             }
 
-                                            // #boton #editar_rol - Botón para cambiar rol
-                                            IconButton(
-                                                onClick = {
-                                                    nuevoRolSeleccionado = u.rol
-                                                    usuarioEditarRol = u
-                                                },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(Icons.Default.AdminPanelSettings, contentDescription = "Cambiar Rol", modifier = Modifier.size(18.dp))
-                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
 
-                                            // #boton #cambiar_password - Botón para cambiar contraseña
-                                            IconButton(
-                                                onClick = {
-                                                    nuevaPasswordText = ""
-                                                    errorPasswordText = null
-                                                    usuarioEditarPassword = u
-                                                },
-                                                modifier = Modifier.size(32.dp)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Icon(Icons.Default.Key, contentDescription = "Cambiar Contraseña", modifier = Modifier.size(18.dp))
-                                            }
+                                                // #boton #ver_detalle_admin - Abre la vista completa de detalle
+                                                if (onVerOportunidad != null) {
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            onVerOportunidad(op.id)
+                                                            onDismissRequest()
+                                                        },
+                                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                                        modifier = Modifier.height(36.dp)
+                                                    ) {
+                                                        Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text("Ver Detalle", style = MaterialTheme.typography.bodySmall)
+                                                    }
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                }
 
-                                            // #boton #eliminar_usuario - Botón icono para eliminar usuario
-                                            IconButton(
-                                                onClick = { usuarioEliminar = u },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Eliminar Usuario", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                                // #boton #editar_oportunidad_admin - Permite al Supervisor/Admin modificar la oportunidad
+                                                Button(
+                                                    onClick = {
+                                                        editOpNombre = op.nombre
+                                                        editOpTipo = op.tipo
+                                                        editOpDesc = op.descripcion
+                                                        editOpFuente = op.fuenteInformacion
+                                                        editOpPrioridad = op.prioridad
+                                                        editOpPotencial = op.potencialComercial
+                                                        editOpEventoNombre = ev?.nombre ?: op.nombre
+                                                        editOpFechaInicio = ev?.fechaInicio ?: "15/04/2026"
+                                                        editOpFechaTermino = ev?.fechaTermino ?: "16/04/2026"
+                                                        editOpHorario = ev?.horario ?: "09:00 - 18:00 hrs"
+                                                        editOpDireccion = ev?.direccion ?: "Dirección corporativa"
+                                                        editOpComuna = ev?.comuna ?: "Santiago"
+                                                        editOpRegion = ev?.region ?: "Región Metropolitana"
+                                                        editOpAsistentes = ev?.cantidadAsistentesEstimada?.toString() ?: "500"
+                                                        editOpObs = op.observaciones
+                                                        oportunidadEditarAdmin = op
+                                                    },
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                                    modifier = Modifier.height(36.dp)
+                                                ) {
+                                                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Modificar Oportunidad", style = MaterialTheme.typography.bodySmall)
+                                                }
                                             }
                                         }
                                     }

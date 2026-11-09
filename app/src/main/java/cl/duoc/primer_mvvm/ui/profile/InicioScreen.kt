@@ -46,7 +46,7 @@ import cl.duoc.primer_mvvm.ui.oportunidades.OportunidadesUiState
 
 /**
  * #perfil #camara #galeria #aviso_camara #permiso_camara #animacion #palabra_clave
- * Pantalla de perfil de usuario completa con modificación de contraseña segura mediante Palabra Clave.
+ * Pantalla de perfil de usuario completa con modificación de contraseña segura mediante Palabra Clave y panel Admin.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +57,7 @@ fun InicioScreen(
     onCerrarSesion: () -> Unit,
     perfilBitmap: Bitmap?,
     onPerfilBitmapChange: (Bitmap?) -> Unit,
+    onVerOportunidad: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -98,7 +99,8 @@ fun InicioScreen(
     // #dialogo #gestion_usuarios - Diálogo de gestión para administradores
     if (showDialogGestionUsuarios) {
         GestionUsuariosDialog(
-            onDismissRequest = { showDialogGestionUsuarios = false }
+            onDismissRequest = { showDialogGestionUsuarios = false },
+            onVerOportunidad = onVerOportunidad
         )
     }
 
