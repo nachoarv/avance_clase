@@ -55,7 +55,7 @@ fun MainApp() {
     var selectedAuthTab by remember { mutableIntStateOf(0) }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        // #animacion #login_dashboard - Transición suave entre autenticación y dashboard
+        // #animacion #login_dashboard - Transición suave de escala y desvanecimiento entre login y dashboard
         AnimatedContent(
             targetState = isLoggedIn,
             transitionSpec = {
@@ -245,16 +245,10 @@ fun MainDashboardApp(
                     OportunidadDetalleScreen(
                         oportunidadId = selectedOportunidadId,
                         uiState = uiState,
-                        usuarioActual = usuario,
                         rol = rol,
                         onVolver = { viewModel.seleccionarOportunidad(null) },
                         onCambiarEstado = { nuevoEstado ->
                             viewModel.actualizarEstadoOportunidad(selectedOportunidadId, nuevoEstado)
-                        },
-                        onEditarOportunidad = { opId, nomOp, tipOp, descOp, fueOp, prioOp, potOp, nomEv, fIni, fTer, hor, dir, com, reg, asis, obs ->
-                            viewModel.editarOportunidadCompleta(
-                                opId, nomOp, tipOp, descOp, fueOp, prioOp, potOp, nomEv, fIni, fTer, hor, dir, com, reg, asis, obs
-                            )
                         },
                         onAgregarSeguimiento = { resp, tipo, res, prox, fechaProx, obs ->
                             viewModel.agregarSeguimiento(selectedOportunidadId, usuario.ifBlank { resp }, tipo, res, prox, fechaProx, obs)

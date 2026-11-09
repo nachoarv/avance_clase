@@ -1,4 +1,4 @@
-// #perfil #camara #galeria #aviso_camara #permiso_camara #gestion_admin #animacion #shimmer_glow
+// #perfil #camara #galeria #aviso_camara #permiso_camara #gestion_admin #animacion #palabra_clave
 package cl.duoc.primer_mvvm.ui.profile
 
 import android.Manifest
@@ -20,6 +20,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import cl.duoc.primer_mvvm.data.UsuarioRepository
@@ -43,8 +45,8 @@ import cl.duoc.primer_mvvm.ui.auth.GestionUsuariosDialog
 import cl.duoc.primer_mvvm.ui.oportunidades.OportunidadesUiState
 
 /**
- * #perfil #camara #galeria #aviso_camara #permiso_camara #animacion
- * Pantalla de perfil de usuario completa con detalles de contacto, foto con cámara/galería y panel Admin.
+ * #perfil #camara #galeria #aviso_camara #permiso_camara #animacion #palabra_clave
+ * Pantalla de perfil de usuario completa con modificación de contraseña segura mediante Palabra Clave.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +63,12 @@ fun InicioScreen(
     var showOpcionesFotoDialog by remember { mutableStateOf(false) }
     var showDialogGestionUsuarios by remember { mutableStateOf(false) }
     var showEditarPerfilDialog by remember { mutableStateOf(false) }
+
+    var showCambiarMiPasswordDialog by remember { mutableStateOf(false) }
+    var miNuevaPassword by remember { mutableStateOf("") }
+    var miRepetirPassword by remember { mutableStateOf("") }
+    var miPalabraClave by remember { mutableStateOf("") }
+    var errorMiPassword by remember { mutableStateOf<String?>(null) }
 
     // Obtener datos extendidos del usuario en sesión
     val datosUsuario = UsuarioRepository.usuarios.collectAsState().value.find {
@@ -91,6 +99,131 @@ fun InicioScreen(
     if (showDialogGestionUsuarios) {
         GestionUsuariosDialog(
             onDismissRequest = { showDialogGestionUsuarios = false }
+        )
+    }
+
+    // #dialogo #cambiar_mi_password #palabra_clave - Modal para cambiar clave desde la pantalla de perfil
+    if (showCambiarMiPasswordDialog && datosUsuario != null) {
+        val esPrivilegiado = UsuarioRepository.esAdminOSupervisor(datosUsuario.rol, datosUsuario.correo)
+
+        AlertDialog(
+            onDismissRequest = { showCambiarMiPasswordDialog = false },
+            icon = { Icon(Icons.Default.Key, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Cambiar Mi Contraseña") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    Text("Usuario: ${datosUsuario.nombreCompleto()} (${datosUsuario.correo})")
+
+                    OutlinedTextField(
+                        value = miNuevaPassword,
+                        onValueChange = {
+                            miNuevaPassword = it
+                            errorMiPassword = null
+                        },
+                        label = { Text("Nueva Contraseña") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = miRepetirPassword,
+                        onValueChange = {
+                            miRepetirPassword = it
+                            errorMiPassword = null
+                        },
+                        label = { Text("Repetir Nueva Contraseña") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // #palabra_clave #seguridad - Solicita Palabra Clave para cuentas Admin / Supervisor
+                    if (esPrivilegiado) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "🔒 Cuenta Privilegiada (${datosUsuario.rol})",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Ingrese la Palabra Clave de Seguridad para autorizar este cambio.",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = miPalabraClave,
+                            onValueChange = {
+                                miPalabraClave = it
+                                errorMiPassword = null
+                            },
+                            label = { Text("Palabra Clave de Seguridad *") },
+                            placeholder = { Text("Ej: EMPRESA2026") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    errorMiPassword?.let { err ->
+                        Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (miNuevaPassword.length < 8) {
+                            errorMiPassword = "La contraseña debe tener al menos 8 caracteres"
+                            return@Button
+                        }
+                        if (miNuevaPassword != miRepetirPassword) {
+                            errorMiPassword = "Las contraseñas no coinciden"
+                            return@Button
+                        }
+
+                        if (esPrivilegiado) {
+                            val esClaveValida = UsuarioRepository.validarPalabraClave(miPalabraClave)
+                            if (!esClaveValida) {
+                                errorMiPassword = "Palabra clave de seguridad incorrecta. No está autorizado para modificar la clave de esta cuenta privilegiada."
+                                return@Button
+                            }
+                        }
+
+                        val ok = UsuarioRepository.cambiarPasswordUsuario(datosUsuario.correo, miNuevaPassword)
+                        if (ok) {
+                            Toast.makeText(context, "Contraseña actualizada exitosamente", Toast.LENGTH_SHORT).show()
+                            showCambiarMiPasswordDialog = false
+                            miNuevaPassword = ""
+                            miRepetirPassword = ""
+                            miPalabraClave = ""
+                        }
+                    }
+                ) {
+                    Text("Guardar Contraseña")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCambiarMiPasswordDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
         )
     }
 
@@ -394,21 +527,37 @@ fun InicioScreen(
                 ) {
                     Text("Información de la Cuenta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     
-                    // #boton #editar_mi_perfil - Botón icono para editar perfil propio
-                    IconButton(
-                        onClick = {
-                            if (datosUsuario != null) {
-                                editNombre = datosUsuario.nombre
-                                editApellido = datosUsuario.apellido
-                                editTelefono = datosUsuario.telefono
-                                editCargo = datosUsuario.cargo
-                                editDepartamento = datosUsuario.departamento
-                            }
-                            showEditarPerfilDialog = true
-                        },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = "Editar mi perfil", modifier = Modifier.size(18.dp))
+                    Row {
+                        // #boton #cambiar_mi_password - Botón para cambiar clave propia con seguridad de palabra clave
+                        IconButton(
+                            onClick = {
+                                miNuevaPassword = ""
+                                miRepetirPassword = ""
+                                miPalabraClave = ""
+                                errorMiPassword = null
+                                showCambiarMiPasswordDialog = true
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Key, contentDescription = "Cambiar mi contraseña", modifier = Modifier.size(18.dp))
+                        }
+
+                        // #boton #editar_mi_perfil - Botón icono para editar perfil propio
+                        IconButton(
+                            onClick = {
+                                if (datosUsuario != null) {
+                                    editNombre = datosUsuario.nombre
+                                    editApellido = datosUsuario.apellido
+                                    editTelefono = datosUsuario.telefono
+                                    editCargo = datosUsuario.cargo
+                                    editDepartamento = datosUsuario.departamento
+                                }
+                                showEditarPerfilDialog = true
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = "Editar mi perfil", modifier = Modifier.size(18.dp))
+                        }
                     }
                 }
 
