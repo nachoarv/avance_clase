@@ -1,4 +1,5 @@
-package cl.duoc.primer_mvvm.`01_formulario`
+// #formulario #registro #viewmodel #validaciones
+package cl.duoc.primer_mvvm.ui.auth
 
 import androidx.lifecycle.ViewModel
 import cl.duoc.primer_mvvm.data.UsuarioRepository
@@ -9,6 +10,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
 
+/**
+ * #formulario #registro #viewmodel #validaciones
+ * ViewModel que procesa el estado del formulario de registro y ejecuta las validaciones.
+ */
 class RegistroViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegistroUiState())
@@ -65,6 +70,7 @@ class RegistroViewModel : ViewModel() {
     fun onRepetirPasswordChange(repetirPassword: String) = cambiarRepetirPassword(repetirPassword)
     fun cambiarAceptaTerminos(value: Boolean) = cambiarTerminos(value)
 
+    // #validaciones #registro - Proceso de validación y registro del usuario en el repositorio
     fun registrar() {
         val estado = _uiState.value
         val errNombre = !validarNombre(estado.nombre)

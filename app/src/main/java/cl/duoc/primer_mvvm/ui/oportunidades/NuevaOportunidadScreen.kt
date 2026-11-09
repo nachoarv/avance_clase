@@ -1,4 +1,5 @@
-package cl.duoc.primer_mvvm.`03_oportunidades`
+// #creacion_oportunidad #formulario_oportunidad #evento #organizacion
+package cl.duoc.primer_mvvm.ui.oportunidades
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.duoc.primer_mvvm.model.Prioridad
 
+/**
+ * #creacion_oportunidad #formulario_oportunidad
+ * Formulario para el registro completo de una nueva oportunidad, evento y organización asociada.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaOportunidadScreen(
@@ -71,6 +76,7 @@ fun NuevaOportunidadScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Registrar Oportunidad") },
+                // #boton #volver - Botón para regresar a la pantalla anterior
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -95,6 +101,7 @@ fun NuevaOportunidadScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            // #campo_texto #nombre_oportunidad - Campo obligatorio para nombre de la oportunidad
             OutlinedTextField(
                 value = nombreOportunidad,
                 onValueChange = {
@@ -107,6 +114,7 @@ fun NuevaOportunidadScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // #campo_texto #tipo_oportunidad - Tipo de oportunidad comercial
             OutlinedTextField(
                 value = tipoOportunidad,
                 onValueChange = { tipoOportunidad = it },
@@ -115,6 +123,7 @@ fun NuevaOportunidadScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // #campo_texto #descripcion - Descripción general de la oportunidad
             OutlinedTextField(
                 value = descripcion,
                 onValueChange = { descripcion = it },
@@ -126,6 +135,7 @@ fun NuevaOportunidadScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Prioridad:", fontWeight = FontWeight.SemiBold)
                     Prioridad.entries.forEach { p ->
+                        // #radio_button #prioridad - Opción de selección de prioridad
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
                                 selected = prioridad == p,
@@ -136,6 +146,7 @@ fun NuevaOportunidadScreen(
                     }
                 }
                 Column(modifier = Modifier.weight(1f)) {
+                    // #campo_texto #potencial_comercial - Potencial comercial estimado
                     OutlinedTextField(
                         value = potencialComercial,
                         onValueChange = { potencialComercial = it },
@@ -154,6 +165,7 @@ fun NuevaOportunidadScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            // #campo_texto #nombre_evento - Nombre del evento
             OutlinedTextField(
                 value = nombreEvento,
                 onValueChange = { nombreEvento = it },
@@ -162,12 +174,14 @@ fun NuevaOportunidadScreen(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // #campo_texto #fecha_inicio - Fecha de inicio del evento
                 OutlinedTextField(
                     value = fechaInicio,
                     onValueChange = { fechaInicio = it },
                     label = { Text("Fecha Inicio") },
                     modifier = Modifier.weight(1f)
                 )
+                // #campo_texto #fecha_termino - Fecha de término del evento
                 OutlinedTextField(
                     value = fechaTermino,
                     onValueChange = { fechaTermino = it },
@@ -177,12 +191,14 @@ fun NuevaOportunidadScreen(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // #campo_texto #comuna - Comuna del evento
                 OutlinedTextField(
                     value = comuna,
                     onValueChange = { comuna = it },
                     label = { Text("Comuna") },
                     modifier = Modifier.weight(1f)
                 )
+                // #campo_texto #region - Región del evento
                 OutlinedTextField(
                     value = region,
                     onValueChange = { region = it },
@@ -191,6 +207,7 @@ fun NuevaOportunidadScreen(
                 )
             }
 
+            // #campo_texto #direccion - Dirección física
             OutlinedTextField(
                 value = direccion,
                 onValueChange = { direccion = it },
@@ -198,6 +215,7 @@ fun NuevaOportunidadScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // #campo_texto #asistentes_estimados - Cantidad estimada de asistentes
             OutlinedTextField(
                 value = asistentesEstimados,
                 onValueChange = { asistentesEstimados = it },
@@ -215,6 +233,7 @@ fun NuevaOportunidadScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            // #campo_texto #nombre_organizacion - Nombre de la organización o empresa
             OutlinedTextField(
                 value = nombreOrganizacion,
                 onValueChange = { nombreOrganizacion = it },
@@ -222,6 +241,7 @@ fun NuevaOportunidadScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // #campo_texto #tipo_organizacion - Tipo de organización
             OutlinedTextField(
                 value = tipoOrganizacion,
                 onValueChange = { tipoOrganizacion = it },
@@ -239,6 +259,7 @@ fun NuevaOportunidadScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            // #campo_texto #nombre_contacto - Nombre del contacto
             OutlinedTextField(
                 value = nombreContacto,
                 onValueChange = { nombreContacto = it },
@@ -247,12 +268,14 @@ fun NuevaOportunidadScreen(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // #campo_texto #cargo_contacto - Cargo del contacto
                 OutlinedTextField(
                     value = cargoContacto,
                     onValueChange = { cargoContacto = it },
                     label = { Text("Cargo") },
                     modifier = Modifier.weight(1f)
                 )
+                // #campo_texto #area_contacto - Área del contacto
                 OutlinedTextField(
                     value = areaContacto,
                     onValueChange = { areaContacto = it },
@@ -261,6 +284,7 @@ fun NuevaOportunidadScreen(
                 )
             }
 
+            // #campo_texto #correo_contacto - Correo del contacto
             OutlinedTextField(
                 value = correoContacto,
                 onValueChange = { correoContacto = it },
@@ -268,6 +292,7 @@ fun NuevaOportunidadScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // #campo_texto #observaciones - Observaciones adicionales
             OutlinedTextField(
                 value = observaciones,
                 onValueChange = { observaciones = it },
@@ -277,6 +302,7 @@ fun NuevaOportunidadScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // #boton #guardar_oportunidad - Botón final para guardar la oportunidad comercial
             Button(
                 onClick = {
                     if (nombreOportunidad.isBlank()) {

@@ -1,4 +1,5 @@
-package cl.duoc.primer_mvvm.`03_oportunidades`
+// #oportunidades #viewmodel #alertas #filtros #editar_oportunidad
+package cl.duoc.primer_mvvm.ui.oportunidades
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
+/**
+ * #oportunidades #viewmodel #alertas #editar_oportunidad
+ * ViewModel que gestiona las oportunidades comerciales, edición, filtros, seguimiento y alertas internas.
+ */
 class OportunidadesViewModel : ViewModel() {
 
     private val repository = OportunidadRepository
@@ -41,6 +46,7 @@ class OportunidadesViewModel : ViewModel() {
         DataSnapshot(ops, evs, orgs, conts, segs)
     }
 
+    // #oportunidades #uistate - Combinación de flows de datos, alertas y filtros
     val uiState: StateFlow<OportunidadesUiState> = combine(
         dataFlow,
         repository.alertas,
@@ -129,6 +135,32 @@ class OportunidadesViewModel : ViewModel() {
         _oportunidadSeleccionadaId.value = id
     }
 
+    // #editar_oportunidad - Lógica para actualizar datos completos de una oportunidad
+    fun editarOportunidadCompleta(
+        oportunidadId: String,
+        nuevoNombre: String,
+        nuevoTipo: String,
+        nuevaDescripcion: String,
+        nuevaFuente: String,
+        nuevaPrioridad: Prioridad,
+        nuevoPotencial: String,
+        nuevoNombreEvento: String,
+        nuevaFechaInicio: String,
+        nuevaFechaTermino: String,
+        nuevoHorario: String,
+        nuevaDireccion: String,
+        nuevaComuna: String,
+        nuevaRegion: String,
+        nuevosAsistentes: Int,
+        nuevasObservaciones: String
+    ) {
+        repository.actualizarOportunidadCompleta(
+            oportunidadId, nuevoNombre, nuevoTipo, nuevaDescripcion, nuevaFuente,
+            nuevaPrioridad, nuevoPotencial, nuevoNombreEvento, nuevaFechaInicio, nuevaFechaTermino,
+            nuevoHorario, nuevaDireccion, nuevaComuna, nuevaRegion, nuevosAsistentes, nuevasObservaciones
+        )
+    }
+
     fun actualizarEstadoOportunidad(oportunidadId: String, nuevoEstado: EstadoOportunidad) {
         repository.actualizarEstadoOportunidad(oportunidadId, nuevoEstado)
     }
@@ -164,6 +196,7 @@ class OportunidadesViewModel : ViewModel() {
         repository.agregarSeguimiento(seg)
     }
 
+    // #alertas - Marca una alerta como leída
     fun marcarAlertaLeida(alertaId: String) {
         repository.marcarAlertaLeida(alertaId)
     }

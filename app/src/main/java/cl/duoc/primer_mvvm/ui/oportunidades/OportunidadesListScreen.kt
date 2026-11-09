@@ -1,26 +1,35 @@
-package cl.duoc.primer_mvvm.`03_oportunidades`
+// #oportunidades #lista_oportunidades #kpi_metricas #filtros #busqueda #animacion #kpi_contador #staggered_enter #press_scale
+package cl.duoc.primer_mvvm.ui.oportunidades
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cl.duoc.primer_mvvm.model.EstadoOportunidad
 import cl.duoc.primer_mvvm.model.Oportunidad
 import cl.duoc.primer_mvvm.model.Prioridad
 
+/**
+ * #oportunidades #lista_oportunidades #kpi_metricas #filtros #animacion
+ * Pantalla principal con animación de conteo en KPIs, entradas escalonadas y efectos táctiles.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OportunidadesListScreen(
@@ -35,6 +44,7 @@ fun OportunidadesListScreen(
 ) {
     Scaffold(
         modifier = modifier,
+        // #boton #nueva_oportunidad - Botón flotante animado para crear una nueva oportunidad comercial
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNuevaOportunidadClick,
@@ -49,7 +59,7 @@ fun OportunidadesListScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Buscador
+            // #campo_texto #buscador - Campo para filtrar la lista por nombre de evento, organización u oportunidad
             OutlinedTextField(
                 value = uiState.busquedaTexto,
                 onValueChange = onSearchTextChange,
@@ -68,7 +78,7 @@ fun OportunidadesListScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Tarjetas de Métricas KPI
+            // #tarjeta #kpi #animacion #kpi_contador - Bloque de tarjetas KPI con contador numérico animado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -95,7 +105,7 @@ fun OportunidadesListScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Chips de Filtro
+            // #filtros - Fila de chips interactivos para filtrar el listado
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -108,7 +118,6 @@ fun OportunidadesListScreen(
                     )
                 }
 
-                // Chips Prioridad
                 item {
                     FilterChip(
                         selected = uiState.filtroPrioridad == Prioridad.ALTA,
@@ -124,7 +133,6 @@ fun OportunidadesListScreen(
                     )
                 }
 
-                // Chips Estado
                 item {
                     FilterChip(
                         selected = uiState.filtroEstado == EstadoOportunidad.PROPUESTA_ENVIADA,
@@ -151,46 +159,63 @@ fun OportunidadesListScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Lista de Oportunidades
-            if (uiState.oportunidades.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.EventBusy,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.outline
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No se encontraron oportunidades con los filtros seleccionados.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline
-                        )
+            // #animacion #lista_oportunidades - Transición animada de la lista
+            AnimatedContent(
+                targetState = uiState.oportunidades.isEmpty(),
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200))
+                },
+                label = "ListEmptyStateAnimation"
+            ) { isEmpty ->
+                if (isEmpty) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.EventBusy,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "No se encontraron oportunidades con los filtros seleccionados.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
                     }
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(uiState.oportunidades, key = { it.id }) { oportunidad ->
-                        val evento = uiState.eventos.find { it.oportunidadId == oportunidad.id }
-                        val organizacion = uiState.organizaciones.find { it.id == evento?.organizacionId }
+                } else {
+                    // #lista #oportunidades #staggered_enter - Entradas de tarjetas con rebote suave
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        itemsIndexed(uiState.oportunidades, key = { _, op -> op.id }) { index, oportunidad ->
+                            val evento = uiState.eventos.find { it.oportunidadId == oportunidad.id }
+                            val organizacion = uiState.organizaciones.find { it.id == evento?.organizacionId }
 
-                        OportunidadCard(
-                            oportunidad = oportunidad,
-                            nombreEvento = evento?.nombre ?: "Sin evento",
-                            nombreOrganizacion = organizacion?.nombre ?: "Organización no especificada",
-                            ubicacion = if (evento != null) "${evento.comuna}, ${evento.region}" else "Ubicación pendiente",
-                            fechaEvento = evento?.fechaInicio ?: "Fecha por definir",
-                            onClick = { onOportunidadClick(oportunidad.id) }
-                        )
+                            // #animacion #staggered_enter - Entrada individual animada para cada tarjeta de la lista
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(animationSpec = tween(durationMillis = 300, delayMillis = index * 50)) +
+                                        slideInVertically(initialOffsetY = { 80 }, animationSpec = tween(300, delayMillis = index * 50)),
+                                label = "CardStaggeredEnter"
+                            ) {
+                                OportunidadCard(
+                                    oportunidad = oportunidad,
+                                    nombreEvento = evento?.nombre ?: "Sin evento",
+                                    nombreOrganizacion = organizacion?.nombre ?: "Organización no especificada",
+                                    ubicacion = if (evento != null) "${evento.comuna}, ${evento.region}" else "Ubicación pendiente",
+                                    fechaEvento = evento?.fechaInicio ?: "Fecha por definir",
+                                    onClick = { onOportunidadClick(oportunidad.id) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -198,6 +223,9 @@ fun OportunidadesListScreen(
     }
 }
 
+/**
+ * #tarjeta #kpi #animacion #kpi_contador - Tarjeta KPI con contador de números animado
+ */
 @Composable
 fun MetricCard(
     title: String,
@@ -205,9 +233,19 @@ fun MetricCard(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    // #animacion #kpi_contador - Transición animada del valor numérico con rebote
+    val animatedCount by animateIntAsState(
+        targetValue = count,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "KpiCountAnimation"
+    )
+
     Card(
         colors = CardDefaults.cardColors(containerColor = color),
-        modifier = modifier
+        modifier = modifier.animateContentSize()
     ) {
         Column(
             modifier = Modifier
@@ -216,7 +254,7 @@ fun MetricCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = count.toString(),
+                text = animatedCount.toString(),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -228,6 +266,9 @@ fun MetricCard(
     }
 }
 
+/**
+ * #tarjeta #oportunidad #animacion #press_scale - Tarjeta interactiva con efecto de escala al ser presionada
+ */
 @Composable
 fun OportunidadCard(
     oportunidad: Oportunidad,
@@ -243,12 +284,27 @@ fun OportunidadCard(
         Prioridad.BAJA -> Color(0xFF388E3C)
     }
 
+    // #animacion #press_scale - Escala táctil al hacer clic/presionar sobre la tarjeta
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "CardPressScale"
+    )
+
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .scale(scale)
+            .animateContentSize()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier
@@ -348,7 +404,7 @@ fun OportunidadCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Divider()
+            HorizontalDivider()
 
             Spacer(modifier = Modifier.height(8.dp))
 

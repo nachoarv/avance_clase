@@ -2,50 +2,50 @@ package cl.duoc.primer_mvvm.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Nueva Paleta de Alto Impacto Visual - Púrpura Imperial, Rosa Neón & Dorado Ámbar
+// Paleta Atractiva de Alto Impacto Visual - Zafiro Eléctrico, Esmeralda Neón y Ámbar Cálido
 
-// Modo Claro
-val PrimaryLight = Color(0xFF5E35B1) // Púrpura Imperial Vibrante
+// Modo Claro (Light Mode)
+val PrimaryLight = Color(0xFF2563EB) // Azul Zafiro Eléctrico
 val OnPrimaryLight = Color(0xFFFFFFFF)
-val PrimaryContainerLight = Color(0xFFEDE7F6)
-val OnPrimaryContainerLight = Color(0xFF311B92)
+val PrimaryContainerLight = Color(0xFFDBEAFE) // Azul Hielo Suave
+val OnPrimaryContainerLight = Color(0xFF1E40AF)
 
-val SecondaryLight = Color(0xFFD81B60) // Rosa Magenta Neón
+val SecondaryLight = Color(0xFF059669) // Esmeralda Neón
 val OnSecondaryLight = Color(0xFFFFFFFF)
-val SecondaryContainerLight = Color(0xFFFCE4EC)
-val OnSecondaryContainerLight = Color(0xFF880E4F)
+val SecondaryContainerLight = Color(0xFFD1FAE5) // Menta Suave
+val OnSecondaryContainerLight = Color(0xFF065F46)
 
-val TertiaryLight = Color(0xFFD97706) // Dorado Ámbar Cálido
+val TertiaryLight = Color(0xFFF59E0B) // Ámbar Cálido
 val OnTertiaryLight = Color(0xFFFFFFFF)
 val TertiaryContainerLight = Color(0xFFFEF3C7)
-val OnTertiaryContainerLight = Color(0xFF78350F)
+val OnTertiaryContainerLight = Color(0xFF92400E)
 
-val BackgroundLight = Color(0xFFF5F3FF) // Fondo Lavanda Suave (Cambio notorio)
-val OnBackgroundLight = Color(0xFF1E1B2E)
+val BackgroundLight = Color(0xFFF8FAFC) // Gris Azulado Ultra Limpio
+val OnBackgroundLight = Color(0xFF0F172A)
 val SurfaceLight = Color(0xFFFFFFFF)
-val OnSurfaceLight = Color(0xFF1E1B2E)
-val SurfaceVariantLight = Color(0xFFE9E5F5)
-val OnSurfaceVariantLight = Color(0xFF4A455A)
+val OnSurfaceLight = Color(0xFF0F172A)
+val SurfaceVariantLight = Color(0xFFE2E8F0)
+val OnSurfaceVariantLight = Color(0xFF475569)
 
-// Modo Oscuro
-val PrimaryDark = Color(0xFFB388FF) // Púrpura Eléctrico
-val OnPrimaryDark = Color(0xFF311B92)
-val PrimaryContainerDark = Color(0xFF4527A0)
-val OnPrimaryContainerDark = Color(0xFFEDE7F6)
+// Modo Oscuro (Dark Mode)
+val PrimaryDark = Color(0xFF60A5FA) // Azul Neón Brillante
+val OnPrimaryDark = Color(0xFF1E3A8A)
+val PrimaryContainerDark = Color(0xFF1E40AF)
+val OnPrimaryContainerDark = Color(0xFFDBEAFE)
 
-val SecondaryDark = Color(0xFFFF4081) // Magenta Brillante
-val OnSecondaryDark = Color(0xFF880E4F)
-val SecondaryContainerDark = Color(0xFFAD1457)
-val OnSecondaryContainerDark = Color(0xFFFCE4EC)
+val SecondaryDark = Color(0xFF34D399) // Menta Neón
+val OnSecondaryDark = Color(0xFF064E3B)
+val SecondaryContainerDark = Color(0xFF065F46)
+val OnSecondaryContainerDark = Color(0xFFD1FAE5)
 
-val TertiaryDark = Color(0xFFFFC107) // Dorado Brillante
-val OnTertiaryDark = Color(0xFF3E2723)
-val TertiaryContainerDark = Color(0xFF78350F)
+val TertiaryDark = Color(0xFFFBBF24) // Dorado Cálido
+val OnTertiaryDark = Color(0xFF78350F)
+val TertiaryContainerDark = Color(0xFF92400E)
 val OnTertiaryContainerDark = Color(0xFFFEF3C7)
 
-val BackgroundDark = Color(0xFF0F0D1C) // Negro Violeta Nocturno
-val OnBackgroundDark = Color(0xFFF2EFFF)
-val SurfaceDark = Color(0xFF191629)
-val OnSurfaceDark = Color(0xFFF2EFFF)
-val SurfaceVariantDark = Color(0xFF2E2A3E)
-val OnSurfaceVariantDark = Color(0xFFCBC6DC)
+val BackgroundDark = Color(0xFF0B0F19) // Negro Zafiro Nocturno
+val OnBackgroundDark = Color(0xFFF1F5F9)
+val SurfaceDark = Color(0xFF111827) // Gris Noche Profundo
+val OnSurfaceDark = Color(0xFFF1F5F9)
+val SurfaceVariantDark = Color(0xFF1F2937)
+val OnSurfaceVariantDark = Color(0xFF9CA3AF)

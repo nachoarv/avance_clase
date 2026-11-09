@@ -1,11 +1,18 @@
+// #modelos #entidades #data_classes #enums
 package cl.duoc.primer_mvvm.model
 
+/**
+ * #modelos - Enum de Prioridades para oportunidades comerciales.
+ */
 enum class Prioridad {
     ALTA,
     MEDIA,
     BAJA
 }
 
+/**
+ * #modelos - Estados del flujo de vida de una oportunidad comercial.
+ */
 enum class EstadoOportunidad(val label: String) {
     EVENTO_IDENTIFICADO("Evento identificado"),
     CONTACTO_PENDIENTE("Contacto pendiente"),
@@ -17,6 +24,9 @@ enum class EstadoOportunidad(val label: String) {
     OPORTUNIDAD_DESCARTADA("Oportunidad descartada")
 }
 
+/**
+ * #modelos - Tipos de acciones de seguimiento comercial.
+ */
 enum class TipoAccionSeguimiento(val label: String) {
     INVESTIGACION_INICIAL("Investigación inicial"),
     PRIMER_CONTACTO("Primer contacto"),
@@ -29,6 +39,9 @@ enum class TipoAccionSeguimiento(val label: String) {
     CIERRE("Cierre de gestión")
 }
 
+/**
+ * #modelos #alertas #aviso_alertas - Tipos de alertas y notificaciones del sistema.
+ */
 enum class TipoAlerta(val label: String) {
     EVENTO_PROXIMO("Evento próximo"),
     SEGUIMIENTO_PENDIENTE("Seguimiento pendiente"),
@@ -36,6 +49,9 @@ enum class TipoAlerta(val label: String) {
     PROPUESTA_SIN_RESPUESTA("Propuesta sin respuesta")
 }
 
+/**
+ * #modelos #usuario - Entidad completa de usuario de la aplicación.
+ */
 data class Usuario(
     val id: String,
     val correo: String,
@@ -44,6 +60,10 @@ data class Usuario(
     val apellido: String = "",
     val rol: String = "Ejecutivo Comercial",
     val fechaNacimiento: String = "",
+    val telefono: String = "+56 9 1234 5678",
+    val cargo: String = "Ejecutivo Comercial",
+    val departamento: String = "Ventas & Convenios",
+    val fechaRegistro: String = "01/01/2026",
     val activo: Boolean = true
 ) {
     fun nombreCompleto(): String {
@@ -51,6 +71,9 @@ data class Usuario(
     }
 }
 
+/**
+ * #modelos #oportunidad - Oportunidad comercial detectada.
+ */
 data class Oportunidad(
     val id: String,
     val nombre: String,
@@ -66,6 +89,9 @@ data class Oportunidad(
     val observaciones: String
 )
 
+/**
+ * #modelos #evento - Información del evento corporativo o feria.
+ */
 data class Evento(
     val id: String,
     val oportunidadId: String,
@@ -87,6 +113,9 @@ data class Evento(
     val observaciones: String
 )
 
+/**
+ * #modelos #organizacion - Organización responsable del evento.
+ */
 data class Organizacion(
     val id: String,
     val nombre: String,
@@ -98,6 +127,9 @@ data class Organizacion(
     val observaciones: String
 )
 
+/**
+ * #modelos #contacto - Contacto corporativo de la organización.
+ */
 data class Contacto(
     val id: String,
     val organizacionId: String,
@@ -109,6 +141,9 @@ data class Contacto(
     val observaciones: String
 )
 
+/**
+ * #modelos #seguimiento - Gestión de seguimiento ejecutada.
+ */
 data class Seguimiento(
     val id: String,
     val oportunidadId: String,
@@ -121,6 +156,9 @@ data class Seguimiento(
     val observaciones: String
 )
 
+/**
+ * #modelos #alertas #aviso_alertas - Objeto de alerta/notificación interna.
+ */
 data class Alerta(
     val id: String,
     val oportunidadId: String,
@@ -131,6 +169,9 @@ data class Alerta(
     val leida: Boolean = false
 )
 
+/**
+ * #modelos #resultado_activacion - Resultado final posterior a la realización del evento.
+ */
 data class ResultadoActivacion(
     val id: String,
     val oportunidadId: String,

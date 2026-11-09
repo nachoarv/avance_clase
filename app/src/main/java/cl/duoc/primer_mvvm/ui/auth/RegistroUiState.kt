@@ -1,5 +1,10 @@
-package cl.duoc.primer_mvvm.`01_formulario`
+// #formulario #uistate #registro
+package cl.duoc.primer_mvvm.ui.auth
 
+/**
+ * #formulario #uistate
+ * Estado UI para la pantalla de registro de usuarios.
+ */
 data class RegistroUiState(
     // Campos del formulario
     val nombre: String = "",

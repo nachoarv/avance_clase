@@ -1,4 +1,5 @@
-package cl.duoc.primer_mvvm.`03_oportunidades`
+// #detalle_oportunidad #seguimiento #resultado_activacion #cambio_estado #editar_oportunidad
+package cl.duoc.primer_mvvm.ui.oportunidades
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -17,16 +18,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cl.duoc.primer_mvvm.data.UsuarioRepository
 import cl.duoc.primer_mvvm.model.*
 
+/**
+ * #detalle_oportunidad #seguimiento #resultado_activacion #editar_oportunidad
+ * Vista detallada de oportunidad comercial con permisos de edición para el creador responsable y el Admin/Supervisor.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OportunidadDetalleScreen(
     oportunidadId: String,
     uiState: OportunidadesUiState,
+    usuarioActual: String = "",
     rol: String = "Ejecutivo Comercial",
     onVolver: () -> Unit,
     onCambiarEstado: (EstadoOportunidad) -> Unit,
+    onEditarOportunidad: ((String, String, String, String, String, Prioridad, String, String, String, String, String, String, String, String, Int, String) -> Unit)? = null,
     onAgregarSeguimiento: (String, TipoAccionSeguimiento, String, String, String, String) -> Unit,
     onRegistrarResultado: (String, Int, Int, Int, Int, String, String) -> Unit,
     modifier: Modifier = Modifier
@@ -39,9 +47,15 @@ fun OportunidadDetalleScreen(
     val seguimientos = uiState.seguimientos.filter { it.oportunidadId == oportunidadId }
     val resultadoActivacion = uiState.resultados.find { it.oportunidadId == oportunidadId }
 
+    // #editar_oportunidad - Permiso de edición si el usuario es el creador/responsable o si es Admin/Supervisor
+    val esCreadorOResponsable = oportunidad?.responsableInterno?.contains(usuarioActual, ignoreCase = true) == true || usuarioActual.isBlank()
+    val esAdminOSupervisor = UsuarioRepository.esAdminOSupervisor(rol, usuarioActual)
+    val puedeEditar = esCreadorOResponsable || esAdminOSupervisor
+
     var showDialogSeguimiento by remember { mutableStateOf(false) }
     var showDialogResultado by remember { mutableStateOf(false) }
     var showDialogCambiarEstado by remember { mutableStateOf(false) }
+    var showDialogEditarOportunidad by remember { mutableStateOf(false) }
 
     if (oportunidad == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -50,18 +64,178 @@ fun OportunidadDetalleScreen(
         return
     }
 
-    // Diálogo para Agregar Seguimiento
+    // Campos para edición pre-llenados
+    var editNombreOp by remember { mutableStateOf(oportunidad.nombre) }
+    var editTipoOp by remember { mutableStateOf(oportunidad.tipo) }
+    var editDescOp by remember { mutableStateOf(oportunidad.descripcion) }
+    var editFuenteOp by remember { mutableStateOf(oportunidad.fuenteInformacion) }
+    var editPrioridadOp by remember { mutableStateOf(oportunidad.prioridad) }
+    var editPotencialOp by remember { mutableStateOf(oportunidad.potencialComercial) }
+
+    var editNombreEvento by remember { mutableStateOf(evento?.nombre ?: "") }
+    var editFechaInicio by remember { mutableStateOf(evento?.fechaInicio ?: "") }
+    var editFechaTermino by remember { mutableStateOf(evento?.fechaTermino ?: "") }
+    var editHorario by remember { mutableStateOf(evento?.horario ?: "") }
+    var editDireccion by remember { mutableStateOf(evento?.direccion ?: "") }
+    var editComuna by remember { mutableStateOf(evento?.comuna ?: "") }
+    var editRegion by remember { mutableStateOf(evento?.region ?: "") }
+    var editAsistentes by remember { mutableStateOf(evento?.cantidadAsistentesEstimada?.toString() ?: "500") }
+    var editObs by remember { mutableStateOf(oportunidad.observaciones) }
+
+    // #dialogo #editar_oportunidad - Modal de edición completa de oportunidad y evento
+    if (showDialogEditarOportunidad) {
+        AlertDialog(
+            onDismissRequest = { showDialogEditarOportunidad = false },
+            icon = { Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Editar Oportunidad") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    Text("Responsable: ${oportunidad.responsableInterno}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+
+                    OutlinedTextField(
+                        value = editNombreOp,
+                        onValueChange = { editNombreOp = it },
+                        label = { Text("Nombre Oportunidad") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editTipoOp,
+                        onValueChange = { editTipoOp = it },
+                        label = { Text("Tipo Oportunidad") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editDescOp,
+                        onValueChange = { editDescOp = it },
+                        label = { Text("Descripción") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editFuenteOp,
+                        onValueChange = { editFuenteOp = it },
+                        label = { Text("Fuente Información") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editPotencialOp,
+                        onValueChange = { editPotencialOp = it },
+                        label = { Text("Potencial Comercial") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text("Prioridad:", fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Prioridad.entries.forEach { p ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = editPrioridadOp == p, onClick = { editPrioridadOp = p })
+                                Text(p.name, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+
+                    HorizontalDivider()
+                    Text("Datos del Evento", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                    OutlinedTextField(
+                        value = editNombreEvento,
+                        onValueChange = { editNombreEvento = it },
+                        label = { Text("Nombre del Evento") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = editFechaInicio,
+                            onValueChange = { editFechaInicio = it },
+                            label = { Text("Fecha Inicio") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = editFechaTermino,
+                            onValueChange = { editFechaTermino = it },
+                            label = { Text("Fecha Término") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = editHorario,
+                        onValueChange = { editHorario = it },
+                        label = { Text("Horario") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editDireccion,
+                        onValueChange = { editDireccion = it },
+                        label = { Text("Dirección") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = editComuna,
+                            onValueChange = { editComuna = it },
+                            label = { Text("Comuna") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = editRegion,
+                            onValueChange = { editRegion = it },
+                            label = { Text("Región") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = editAsistentes,
+                        onValueChange = { editAsistentes = it },
+                        label = { Text("Asistentes Estimados") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editObs,
+                        onValueChange = { editObs = it },
+                        label = { Text("Observaciones") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            // #boton #guardar_edicion - Botón para guardar las modificaciones de la oportunidad
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (editNombreOp.isBlank()) return@Button
+                        onEditarOportunidad?.invoke(
+                            oportunidadId, editNombreOp, editTipoOp, editDescOp, editFuenteOp,
+                            editPrioridadOp, editPotencialOp, editNombreEvento, editFechaInicio, editFechaTermino,
+                            editHorario, editDireccion, editComuna, editRegion, editAsistentes.toIntOrNull() ?: 500, editObs
+                        )
+                        Toast.makeText(context, "Oportunidad modificada exitosamente", Toast.LENGTH_SHORT).show()
+                        showDialogEditarOportunidad = false
+                    }
+                ) {
+                    Text("Guardar Cambios")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialogEditarOportunidad = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // #dialogo #seguimiento - Diálogo para agregar una acción de seguimiento
     if (showDialogSeguimiento) {
         DialogAgregarSeguimiento(
             onDismiss = { showDialogSeguimiento = false },
             onGuardar = { tipo, resultado, proxAccion, fechaProx, obs ->
-                onAgregarSeguimiento("Usuario Actual", tipo, resultado, proxAccion, fechaProx, obs)
+                onAgregarSeguimiento(usuarioActual.ifBlank { "Usuario Actual" }, tipo, resultado, proxAccion, fechaProx, obs)
                 showDialogSeguimiento = false
             }
         )
     }
 
-    // Diálogo para Registrar Resultado de Activación
+    // #dialogo #resultado_activacion - Diálogo para registrar el resultado final de la activación
     if (showDialogResultado) {
         DialogRegistrarResultado(
             onDismiss = { showDialogResultado = false },
@@ -72,7 +246,7 @@ fun OportunidadDetalleScreen(
         )
     }
 
-    // Diálogo para Cambiar Estado
+    // #dialogo #cambiar_estado - Diálogo para modificar el estado de la oportunidad
     if (showDialogCambiarEstado) {
         AlertDialog(
             onDismissRequest = { showDialogCambiarEstado = false },
@@ -127,8 +301,14 @@ fun OportunidadDetalleScreen(
                     }
                 },
                 actions = {
+                    // #boton #editar_oportunidad - Muestra el botón de edición si el usuario es el creador o Admin/Supervisor
+                    if (puedeEditar) {
+                        IconButton(onClick = { showDialogEditarOportunidad = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Editar Oportunidad")
+                        }
+                    }
                     IconButton(onClick = { showDialogCambiarEstado = true }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Cambiar estado")
+                        Icon(Icons.Default.Sync, contentDescription = "Cambiar estado")
                     }
                 }
             )
@@ -142,7 +322,7 @@ fun OportunidadDetalleScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Tarjeta de Resumen y Estado
+            // #tarjeta #resumen_estado - Resumen visual del estado y prioridad
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 modifier = Modifier.fillMaxWidth()
@@ -170,7 +350,7 @@ fun OportunidadDetalleScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text("Tipo: ${oportunidad.tipo}")
-                    Text("Responsable: ${oportunidad.responsableInterno}")
+                    Text("Creador / Responsable: ${oportunidad.responsableInterno}", fontWeight = FontWeight.SemiBold)
                     Text("Potencial: ${oportunidad.potencialComercial}")
                     Text("Fuente: ${oportunidad.fuenteInformacion}")
                     Text("Detección: ${oportunidad.fechaDeteccion}")
@@ -178,10 +358,23 @@ fun OportunidadDetalleScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text("Observaciones: ${oportunidad.observaciones}", style = MaterialTheme.typography.bodySmall)
                     }
+
+                    if (puedeEditar) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // #boton #editar_oportunidad - Botón en la tarjeta para editar la oportunidad
+                        OutlinedButton(
+                            onClick = { showDialogEditarOportunidad = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Modificar Oportunidad")
+                        }
+                    }
                 }
             }
 
-            // Información del Evento
+            // #tarjeta #evento - Detalles del evento
             if (evento != null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -205,7 +398,7 @@ fun OportunidadDetalleScreen(
                 }
             }
 
-            // Organización y Contactos
+            // #tarjeta #organizacion - Organización y contactos asociados
             if (organizacion != null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -242,7 +435,7 @@ fun OportunidadDetalleScreen(
                 }
             }
 
-            // Acciones de Seguimiento
+            // #tarjeta #seguimiento - Historial de acciones de seguimiento
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -308,7 +501,7 @@ fun OportunidadDetalleScreen(
                 }
             }
 
-            // Resultado de Activación (si existe o botón para registrarlo)
+            // #tarjeta #resultado_activacion - Resultado final de la activación
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -345,6 +538,9 @@ fun OportunidadDetalleScreen(
     }
 }
 
+/**
+ * #dialogo #seguimiento - Componente Diálogo para agregar acción de seguimiento
+ */
 @Composable
 fun DialogAgregarSeguimiento(
     onDismiss: () -> Unit,
@@ -421,6 +617,9 @@ fun DialogAgregarSeguimiento(
     )
 }
 
+/**
+ * #dialogo #resultado_activacion - Componente Diálogo para registrar el resultado final de la activación
+ */
 @Composable
 fun DialogRegistrarResultado(
     onDismiss: () -> Unit,

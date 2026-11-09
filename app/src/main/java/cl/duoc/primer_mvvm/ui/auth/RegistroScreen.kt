@@ -1,5 +1,7 @@
-package cl.duoc.primer_mvvm.`01_formulario`
+// #formulario #registro #datepicker #terminos #validaciones #animacion
+package cl.duoc.primer_mvvm.ui.auth
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +20,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+/**
+ * #formulario #registro #datepicker #animacion
+ * Pantalla de registro de nuevos usuarios con formulario animado y validaciones.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroScreen(
@@ -29,10 +35,12 @@ fun RegistroScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
 
+    // #dialogo #datepicker - Selector modal de fecha de nacimiento
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
+            // #boton #aceptar_fecha - Botón para confirmar fecha seleccionada
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -49,6 +57,7 @@ fun RegistroScreen(
                     Text("Aceptar")
                 }
             },
+            // #boton #cancelar_fecha - Botón para cerrar selector
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
                     Text("Cancelar")
@@ -72,6 +81,7 @@ fun RegistroScreen(
             style = MaterialTheme.typography.headlineMedium
         )
 
+        // #campo_texto #nombre - Campo para escribir el nombre
         OutlinedTextField(
             value = uiState.nombre,
             onValueChange = { viewModel.onNombreChange(it) },
@@ -85,6 +95,7 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // #campo_texto #apellido - Campo para escribir el apellido
         OutlinedTextField(
             value = uiState.apellido,
             onValueChange = { viewModel.onApellidoChange(it) },
@@ -98,6 +109,7 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // #campo_texto #fecha_nacimiento - Campo con DatePicker para fecha de nacimiento
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = uiState.fechaNacimiento,
@@ -105,6 +117,7 @@ fun RegistroScreen(
                 readOnly = true,
                 label = { Text("Fecha de nacimiento") },
                 placeholder = { Text("DD/MM/AAAA") },
+                // #boton #datepicker - Botón icono para desplegar el selector de fecha
                 trailingIcon = {
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
@@ -128,6 +141,7 @@ fun RegistroScreen(
             )
         }
 
+        // #campo_texto #correo - Campo para ingresar el correo
         OutlinedTextField(
             value = uiState.correo,
             onValueChange = { viewModel.onCorreoChange(it) },
@@ -141,6 +155,7 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // #campo_texto #password - Campo para ingresar la contraseña
         OutlinedTextField(
             value = uiState.password,
             onValueChange = { viewModel.onPasswordChange(it) },
@@ -155,6 +170,7 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // #campo_texto #repetir_password - Campo para repetir la contraseña
         OutlinedTextField(
             value = uiState.repetirPassword,
             onValueChange = { viewModel.onRepetirPasswordChange(it) },
@@ -169,6 +185,7 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // #checkbox #terminos - Casilla para aceptar los términos y condiciones
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -181,32 +198,46 @@ fun RegistroScreen(
             Text("Acepto los términos y condiciones")
         }
 
-        if (uiState.errorTerminos) {
+        // #animacion #error_terminos - Aparición animada del error de términos
+        AnimatedVisibility(
+            visible = uiState.errorTerminos,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
             Text(
                 text = "Debe aceptar los términos y condiciones",
                 color = MaterialTheme.colorScheme.error
             )
         }
 
-        if (uiState.mensajeExito) {
-            Text(
-                text = "¡Usuario registrado correctamente!",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            onRegistroExitoso?.let { onExito ->
-                Button(
-                    onClick = {
-                        val usuario = uiState.nombre.ifBlank { uiState.correo }
-                        onExito(usuario)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Ir a mi cuenta")
+        // #animacion #mensaje_exito - Despliegue animado del aviso de registro exitoso
+        AnimatedVisibility(
+            visible = uiState.mensajeExito,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "¡Usuario registrado correctamente!",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                onRegistroExitoso?.let { onExito ->
+                    // #boton #ir_a_mi_cuenta - Botón desplegado tras registro exitoso
+                    Button(
+                        onClick = {
+                            val usuario = uiState.nombre.ifBlank { uiState.correo }
+                            onExito(usuario)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Ir a mi cuenta")
+                    }
                 }
             }
         }
 
+        // #boton #registrarse - Botón principal para enviar el formulario de registro
         Button(
             onClick = {
                 viewModel.registrar()
@@ -217,6 +248,7 @@ fun RegistroScreen(
         }
 
         onIrALogin?.let { onLogin ->
+            // #boton #ir_a_login - Botón para navegar de vuelta al login
             TextButton(
                 onClick = onLogin,
                 modifier = Modifier.fillMaxWidth()

@@ -1,7 +1,11 @@
-package cl.duoc.primer_mvvm.`01_formulario`
+// #validaciones #formulario #seguridad
+package cl.duoc.primer_mvvm.ui.auth
 
 import java.util.Calendar
 
+/**
+ * #validaciones - Funciones de validación para campos del formulario de registro.
+ */
 fun validarNombre(nombre: String): Boolean {
     return nombre.isNotBlank()
 }

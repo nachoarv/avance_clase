@@ -1,7 +1,12 @@
-package cl.duoc.primer_mvvm.`03_oportunidades`
+// #oportunidades #uistate #alertas
+package cl.duoc.primer_mvvm.ui.oportunidades
 
 import cl.duoc.primer_mvvm.model.*
 
+/**
+ * #oportunidades #uistate #alertas
+ * Estado UI global de la sección de oportunidades y notificaciones de alertas.
+ */
 data class OportunidadesUiState(
     val oportunidades: List<Oportunidad> = emptyList(),
     val eventos: List<Evento> = emptyList(),

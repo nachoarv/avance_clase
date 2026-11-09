@@ -1,3 +1,4 @@
+// #repositorio #datos_oportunidades #alertas #seguimientos #editar_oportunidad
 package cl.duoc.primer_mvvm.data
 
 import cl.duoc.primer_mvvm.model.*
@@ -7,6 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
 
+/**
+ * #repositorio #datos_oportunidades #alertas #editar_oportunidad
+ * Repositorio de datos en memoria para oportunidades, eventos, organizaciones, contactos, seguimientos y alertas.
+ */
 object OportunidadRepository {
 
     private val _organizaciones = MutableStateFlow<List<Organizacion>>(emptyList())
@@ -101,7 +106,7 @@ object OportunidadRepository {
             descripcion = "Espacio para stand de convenios dentales y atención clínica veterinaria para colaboradores.",
             fuenteInformacion = "Portal web municipal",
             fechaDeteccion = "10/02/2026",
-            responsableInterno = "Ejecutivo Comercial - Juan Pérez",
+            responsableInterno = "Juan Pérez",
             prioridad = Prioridad.ALTA,
             potencialComercial = "Alto (Estimado > 2.000 asistentes)",
             estado = EstadoOportunidad.PROPUESTA_ENVIADA,
@@ -137,7 +142,7 @@ object OportunidadRepository {
             descripcion = "Jornada corporativa anual en casa matriz para 1.500 bancarios.",
             fuenteInformacion = "Redes Sociales / LinkedIn",
             fechaDeteccion = "15/02/2026",
-            responsableInterno = "Ejecutiva Comercial - María González",
+            responsableInterno = "María Soto",
             prioridad = Prioridad.ALTA,
             potencialComercial = "Alto",
             estado = EstadoOportunidad.CONTACTO_REALIZADO,
@@ -173,7 +178,7 @@ object OportunidadRepository {
             descripcion = "Muestra de servicios mecánicos y convenios automotrices corporativos.",
             fuenteInformacion = "Contacto directo",
             fechaDeteccion = "05/01/2026",
-            responsableInterno = "Ejecutivo Comercial - Andrés Soto",
+            responsableInterno = "Carlos Gómez",
             prioridad = Prioridad.MEDIA,
             potencialComercial = "Medio",
             estado = EstadoOportunidad.EVENTO_IDENTIFICADO,
@@ -220,7 +225,7 @@ object OportunidadRepository {
         val seg2 = Seguimiento(
             id = "seg_2",
             oportunidadId = "op_2",
-            usuarioResponsable = "María González",
+            usuarioResponsable = "María Soto",
             tipoAccion = TipoAccionSeguimiento.PRIMER_CONTACTO,
             fechaHora = "22/02/2026 15:00 hrs",
             resultado = "Contacto telefónico con Carlos Fuentes.",
@@ -231,6 +236,7 @@ object OportunidadRepository {
 
         _seguimientos.value = listOf(seg1, seg2)
 
+        // #alertas #aviso_alertas - Datos iniciales de alertas
         val alt1 = Alerta(
             id = "alt_1",
             oportunidadId = "op_1",
@@ -266,6 +272,62 @@ object OportunidadRepository {
         }
         _eventos.update { it + evento }
         _oportunidades.update { it + oportunidad }
+    }
+
+    // #editar_oportunidad - Permite modificar los datos completos de una oportunidad existente
+    fun actualizarOportunidadCompleta(
+        oportunidadId: String,
+        nuevoNombre: String,
+        nuevoTipo: String,
+        nuevaDescripcion: String,
+        nuevaFuente: String,
+        nuevaPrioridad: Prioridad,
+        nuevoPotencial: String,
+        nuevoNombreEvento: String,
+        nuevaFechaInicio: String,
+        nuevaFechaTermino: String,
+        nuevoHorario: String,
+        nuevaDireccion: String,
+        nuevaComuna: String,
+        nuevaRegion: String,
+        nuevosAsistentes: Int,
+        nuevasObservaciones: String
+    ) {
+        _oportunidades.update { list ->
+            list.map { op ->
+                if (op.id == oportunidadId) {
+                    op.copy(
+                        nombre = nuevoNombre,
+                        tipo = nuevoTipo,
+                        descripcion = nuevaDescripcion,
+                        fuenteInformacion = nuevaFuente,
+                        prioridad = nuevaPrioridad,
+                        potencialComercial = nuevoPotencial,
+                        fechaUltimaActualizacion = "Hoy",
+                        observaciones = nuevasObservaciones
+                    )
+                } else op
+            }
+        }
+
+        _eventos.update { list ->
+            list.map { ev ->
+                if (ev.oportunidadId == oportunidadId) {
+                    ev.copy(
+                        nombre = nuevoNombreEvento,
+                        tipo = nuevoTipo,
+                        fechaInicio = nuevaFechaInicio,
+                        fechaTermino = nuevaFechaTermino,
+                        horario = nuevoHorario,
+                        direccion = nuevaDireccion,
+                        comuna = nuevaComuna,
+                        region = nuevaRegion,
+                        cantidadAsistentesEstimada = nuevosAsistentes,
+                        observaciones = nuevasObservaciones
+                    )
+                } else ev
+            }
+        }
     }
 
     fun actualizarEstadoOportunidad(oportunidadId: String, nuevoEstado: EstadoOportunidad) {
@@ -306,6 +368,7 @@ object OportunidadRepository {
         }
     }
 
+    // #alertas - Actualizar estado de lectura de la alerta
     fun marcarAlertaLeida(alertaId: String) {
         _alertas.update { list ->
             list.map { alt ->
