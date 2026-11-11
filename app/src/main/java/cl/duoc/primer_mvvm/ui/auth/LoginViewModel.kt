@@ -24,8 +24,17 @@ class LoginViewModel : ViewModel() {
         uiState = uiState.copy(password = password, errorPassword = false, mensajeError = null)
     }
 
-    // #autenticacion #desactivar_usuario - Validación de credenciales y estado activo de la cuenta
+    // #autenticacion #desactivar_usuario #hu27 - Validación de credenciales, estado activo y bloqueo temporal
     fun iniciarSesion(onSuccess: (String, String) -> Unit) {
+        val ahora = System.currentTimeMillis()
+        if (uiState.bloqueadoHasta > ahora) {
+            val segundosRestantes = (uiState.bloqueadoHasta - ahora) / 1000
+            uiState = uiState.copy(
+                mensajeError = "Acceso bloqueado temporalmente por intentos fallidos. Intente en ${segundosRestantes.coerceAtLeast(1)} segundos."
+            )
+            return
+        }
+
         val correoInput = uiState.correo.trim()
         val passwordInput = uiState.password.trim()
 
@@ -42,13 +51,17 @@ class LoginViewModel : ViewModel() {
             }
 
             if (usuario.password == passwordInput) {
-                uiState = uiState.copy(mensajeError = null, mostrarOpcionCambiarPassword = false)
+                uiState = uiState.copy(mensajeError = null, mostrarOpcionCambiarPassword = false, intentosFallidos = 0, bloqueadoHasta = 0L)
                 onSuccess(usuario.nombreCompleto(), usuario.rol)
             } else {
+                val nuevosIntentos = uiState.intentosFallidos + 1
+                val bloqueo = if (nuevosIntentos >= 3) ahora + 30000 else 0L
                 uiState = uiState.copy(
                     errorPassword = true,
-                    mensajeError = "Contraseña incorrecta para ${usuario.correo}",
-                    mostrarOpcionCambiarPassword = true
+                    mensajeError = if (bloqueo > 0) "Demasiados intentos fallidos. Acceso bloqueado por 30 segundos." else "Contraseña incorrecta para ${usuario.correo} (Intento $nuevosIntentos/3)",
+                    mostrarOpcionCambiarPassword = true,
+                    intentosFallidos = nuevosIntentos,
+                    bloqueadoHasta = bloqueo
                 )
             }
             return

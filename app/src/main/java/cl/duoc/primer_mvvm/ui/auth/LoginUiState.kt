@@ -17,5 +17,7 @@ data class LoginUiState(
     val repetirNuevaPassword: String = "",
     val palabraClaveInput: String = "",
     val errorNuevaPassword: String? = null,
-    val mensajeExitoCambio: String? = null
+    val mensajeExitoCambio: String? = null,
+    val intentosFallidos: Int = 0,
+    val bloqueadoHasta: Long = 0L
 )

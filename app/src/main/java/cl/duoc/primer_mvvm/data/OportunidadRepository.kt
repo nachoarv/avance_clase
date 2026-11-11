@@ -39,6 +39,28 @@ object OportunidadRepository {
         cargarDatosFicticiosIniciales()
     }
 
+    // #hu25 - Reasignar responsable de oportunidad entre ejecutivos
+    fun reasignarResponsable(oportunidadId: String, nuevoResponsable: String): Boolean {
+        val index = _oportunidades.value.indexOfFirst { it.id == oportunidadId }
+        if (index != -1) {
+            _oportunidades.update { lista ->
+                lista.toMutableList().apply {
+                    val op = this[index]
+                    this[index] = op.copy(responsableInterno = nuevoResponsable)
+                }
+            }
+            ActividadLogRepository.registrarActividad(
+                "Sistema/Supervisor",
+                "REASIGNAR_OPORTUNIDAD",
+                "Oportunidad ${opIdLog(oportunidadId)} reasignada a $nuevoResponsable"
+            )
+            return true
+        }
+        return false
+    }
+
+    private fun opIdLog(id: String): String = _oportunidades.value.find { it.id == id }?.nombre ?: id
+
     private fun cargarDatosFicticiosIniciales() {
         val org1 = Organizacion(
             id = "org_1",
