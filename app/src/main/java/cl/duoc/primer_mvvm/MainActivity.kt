@@ -245,10 +245,14 @@ fun MainDashboardApp(
                     OportunidadDetalleScreen(
                         oportunidadId = selectedOportunidadId,
                         uiState = uiState,
+                        usuarioActual = usuario,
                         rol = rol,
                         onVolver = { viewModel.seleccionarOportunidad(null) },
                         onCambiarEstado = { nuevoEstado ->
                             viewModel.actualizarEstadoOportunidad(selectedOportunidadId, nuevoEstado)
+                        },
+                        onEditarOportunidad = { opId, nomOp, tipOp, descOp, fuenteOp, prio, pot, nomEv, fIni, fTer, hor, dir, com, reg, asis, obs ->
+                            viewModel.editarOportunidadCompleta(opId, nomOp, tipOp, descOp, fuenteOp, prio, pot, nomEv, fIni, fTer, hor, dir, com, reg, asis, obs)
                         },
                         onAgregarSeguimiento = { resp, tipo, res, prox, fechaProx, obs ->
                             viewModel.agregarSeguimiento(selectedOportunidadId, usuario.ifBlank { resp }, tipo, res, prox, fechaProx, obs)

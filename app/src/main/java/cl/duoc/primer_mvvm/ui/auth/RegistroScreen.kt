@@ -35,6 +35,14 @@ fun RegistroScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
 
+    // #redireccion_automatica #registro - Inicia sesión de inmediato y redirige al Dashboard sin clics adicionales
+    LaunchedEffect(uiState.mensajeExito) {
+        if (uiState.mensajeExito) {
+            val usuario = uiState.nombre.ifBlank { uiState.correo }
+            onRegistroExitoso?.invoke(usuario)
+        }
+    }
+
     // #dialogo #datepicker - Selector modal de fecha de nacimiento
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()

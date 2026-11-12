@@ -675,7 +675,14 @@ fun InicioScreen(
                             Text("No hay oportunidades confirmadas actualmente.")
                         } else {
                             confirmadas.forEach { op ->
-                                Card(modifier = Modifier.fillMaxWidth()) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            showDialogConfirmadas = false
+                                            onVerOportunidad?.invoke(op.id)
+                                        }
+                                ) {
                                     Column(modifier = Modifier.padding(12.dp)) {
                                         Text(op.nombre, fontWeight = FontWeight.Bold)
                                         Text("Estado: ${op.estado.label}", style = MaterialTheme.typography.bodySmall)

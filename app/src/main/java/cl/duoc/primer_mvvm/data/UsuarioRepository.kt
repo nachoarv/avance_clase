@@ -80,7 +80,7 @@ object UsuarioRepository {
             cargo = "Ejecutivo de Convenios",
             departamento = "Ventas Zonal Norte",
             fechaRegistro = "01/02/2026",
-            activo = false // Demostración de cuenta inactiva
+            activo = true
         )
     )
 
