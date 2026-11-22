@@ -275,7 +275,8 @@ fun MainDashboardApp(
                         1 -> AlertasScreen(
                             uiState = uiState,
                             onMarcarLeida = { alertaId -> viewModel.marcarAlertaLeida(alertaId) },
-                            onVerOportunidad = { opId -> viewModel.seleccionarOportunidad(opId) }
+                            onVerOportunidad = { opId -> viewModel.seleccionarOportunidad(opId) },
+                            onMarcarTodasLeidas = { viewModel.marcarTodasAlertasLeidas() }
                         )
                         2 -> NuevaOportunidadScreen(
                             onVolver = { currentNavDestination = 0 },

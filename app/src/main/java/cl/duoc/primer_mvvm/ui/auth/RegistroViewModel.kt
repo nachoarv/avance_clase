@@ -103,6 +103,17 @@ class RegistroViewModel : ViewModel() {
         }
 
         if (formularioValido) {
+            val correoExiste = UsuarioRepository.buscarPorCorreo(estado.correo.trim()) != null
+            if (correoExiste) {
+                _uiState.update { estadoActual ->
+                    estadoActual.copy(
+                        errorCorreo = true,
+                        mensajeExito = false
+                    )
+                }
+                return
+            }
+
             val nuevoUsuario = Usuario(
                 id = UUID.randomUUID().toString(),
                 correo = estado.correo.trim(),
@@ -112,7 +123,8 @@ class RegistroViewModel : ViewModel() {
                 rol = "Ejecutivo Comercial",
                 fechaNacimiento = estado.fechaNacimiento
             )
-            UsuarioRepository.agregarUsuario(nuevoUsuario)
+            val ok = UsuarioRepository.agregarUsuario(nuevoUsuario)
+            _uiState.update { it.copy(mensajeExito = ok, errorCorreo = !ok) }
             println("Usuario registrado correctamente: ${nuevoUsuario.correo}")
         } else {
             println("Error en el formulario")

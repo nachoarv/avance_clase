@@ -399,6 +399,13 @@ object OportunidadRepository {
         }
     }
 
+    // #alertas #hu22 - Marcar todas las alertas como leídas
+    fun marcarTodasAlertasLeidas() {
+        _alertas.update { list ->
+            list.map { alt -> alt.copy(leida = true) }
+        }
+    }
+
     fun registrarResultadoActivacion(resultado: ResultadoActivacion) {
         _resultados.update { it + resultado }
         actualizarEstadoOportunidad(resultado.oportunidadId, EstadoOportunidad.ACTIVACION_REALIZADA)

@@ -201,6 +201,11 @@ class OportunidadesViewModel : ViewModel() {
         repository.marcarAlertaLeida(alertaId)
     }
 
+    // #alertas #hu22 - Marca todas las alertas como leídas
+    fun marcarTodasAlertasLeidas() {
+        repository.marcarTodasAlertasLeidas()
+    }
+
     fun registrarResultadoActivacion(
         oportunidadId: String,
         fecha: String,

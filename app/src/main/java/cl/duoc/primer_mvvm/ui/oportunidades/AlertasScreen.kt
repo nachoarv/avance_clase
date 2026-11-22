@@ -34,6 +34,7 @@ fun AlertasScreen(
     uiState: OportunidadesUiState,
     onMarcarLeida: (String) -> Unit,
     onVerOportunidad: (String) -> Unit,
+    onMarcarTodasLeidas: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -41,20 +42,33 @@ fun AlertasScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // #aviso_alertas - Encabezado principal de alertas
-        Text(
-            text = "Alertas y Recordatorios Internos",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Text(
-            text = "Supervisión de eventos próximos, gestiones sin respuesta y seguimientos pendientes.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
+        // #aviso_alertas #hu22 - Encabezado principal de alertas con opción de marcar todas leídas
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Alertas y Recordatorios Internos",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Supervisión de eventos próximos y seguimientos.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (uiState.totalAlertasSinLeer > 0 && onMarcarTodasLeidas != null) {
+                TextButton(onClick = onMarcarTodasLeidas) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Marcar todas", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // #animacion #lista_alertas - Transición animada de la lista de alertas
