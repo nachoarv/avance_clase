@@ -412,4 +412,45 @@ object OportunidadRepository {
     }
 
     fun generarId(): String = UUID.randomUUID().toString().take(8)
+
+    // #api - Sincroniza las oportunidades comerciales desde la API Node.js
+    suspend fun sincronizarOportunidadesConApiNode(): Boolean {
+        return try {
+            val response = cl.duoc.primer_mvvm.data.api.BackendApiClient.apiService.getOportunidades()
+            if (response.isSuccessful && response.body() != null) {
+                val apiOps = response.body()!!
+                val mapped = apiOps.map { op ->
+                    val prioEnum = try { Prioridad.valueOf(op.prioridad.uppercase()) } catch (e: Exception) { Prioridad.MEDIA }
+                    val estEnum = EstadoOportunidad.values().find { it.label.equals(op.estado, ignoreCase = true) } ?: EstadoOportunidad.EVENTO_IDENTIFICADO
+                    Oportunidad(
+                        id = op.id?.toString() ?: generarId(),
+                        nombre = op.nombre,
+                        tipo = op.tipo,
+                        descripcion = op.descripcion,
+                        fuenteInformacion = op.fuenteInformacion,
+                        fechaDeteccion = op.fechaDeteccion,
+                        responsableInterno = op.responsableInterno,
+                        prioridad = prioEnum,
+                        potencialComercial = op.potencialComercial,
+                        estado = estEnum,
+                        fechaUltimaActualizacion = op.fechaUltimaActualizacion,
+                        observaciones = op.observaciones ?: ""
+                    )
+                }
+                if (mapped.isNotEmpty()) {
+                    _oportunidades.update { actual ->
+                        val listaMut = actual.toMutableList()
+                        mapped.forEach { m ->
+                            val idx = listaMut.indexOfFirst { it.id == m.id || it.nombre.equals(m.nombre, ignoreCase = true) }
+                            if (idx != -1) listaMut[idx] = m else listaMut.add(m)
+                        }
+                        listaMut
+                    }
+                }
+                true
+            } else false
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

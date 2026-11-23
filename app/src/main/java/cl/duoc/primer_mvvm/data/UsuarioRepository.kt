@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 /**
  * #repositorio #datos_usuarios #autenticacion #palabra_clave
@@ -80,7 +81,7 @@ object UsuarioRepository {
             cargo = "Ejecutivo de Convenios",
             departamento = "Ventas Zonal Norte",
             fechaRegistro = "01/02/2026",
-            activo = true
+            activo = false
         )
     )
 
@@ -198,5 +199,69 @@ object UsuarioRepository {
             lista + usuario
         }
         return true
+    }
+
+    // #api - Sincroniza la lista de usuarios desde la API Node.js si está en línea
+    suspend fun sincronizarConApiNode(): Boolean {
+        return try {
+            val response = cl.duoc.primer_mvvm.data.api.BackendApiClient.apiService.getUsuarios()
+            if (response.isSuccessful && response.body() != null) {
+                val apiUsers = response.body()!!
+                val usuariosMapeados = apiUsers.map { apiUser ->
+                    Usuario(
+                        id = apiUser.id?.toString() ?: UUID.randomUUID().toString(),
+                        correo = apiUser.correo,
+                        password = apiUser.password ?: "Password123",
+                        nombre = apiUser.nombre,
+                        rol = apiUser.rol
+                    )
+                }
+                if (usuariosMapeados.isNotEmpty()) {
+                    _usuarios.update { actual ->
+                        val combinada = actual.toMutableList()
+                        usuariosMapeados.forEach { u ->
+                            val idx = combinada.indexOfFirst { it.correo.equals(u.correo, ignoreCase = true) }
+                            if (idx != -1) combinada[idx] = u else combinada.add(u)
+                        }
+                        combinada
+                    }
+                }
+                true
+            } else false
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // #api - Inicia sesión remotamente consumiendo POST /api/login de Node.js
+    suspend fun loginConApiNode(correo: String, password: String): Pair<Boolean, String?> {
+        return try {
+            val req = cl.duoc.primer_mvvm.data.api.LoginRequest(correo.trim(), password)
+            val res = cl.duoc.primer_mvvm.data.api.BackendApiClient.apiService.login(req)
+            if (res.isSuccessful && res.body() != null) {
+                val apiUser = res.body()!!.usuario
+                val usuarioModel = Usuario(
+                    id = apiUser.id?.toString() ?: "1",
+                    correo = apiUser.correo,
+                    password = password,
+                    nombre = apiUser.nombre,
+                    rol = apiUser.rol
+                )
+                _usuarios.update { lista ->
+                    val idx = lista.indexOfFirst { it.correo.equals(apiUser.correo, ignoreCase = true) }
+                    if (idx != -1) {
+                        lista.toMutableList().apply { this[idx] = usuarioModel }
+                    } else {
+                        lista + usuarioModel
+                    }
+                }
+                Pair(true, null)
+            } else {
+                val msg = if (res.code() == 401) "Credenciales inválidas en la API." else "Error en la API Node.js (${res.code()})"
+                Pair(false, msg)
+            }
+        } catch (e: Exception) {
+            Pair(false, "No se pudo conectar a la API Node.js: ${e.localizedMessage}")
+        }
     }
 }
