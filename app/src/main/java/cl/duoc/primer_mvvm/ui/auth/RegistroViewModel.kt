@@ -1,4 +1,4 @@
-// #formulario #registro #viewmodel #validaciones
+// #hu01 #formulario #registro #viewmodel #validaciones
 package cl.duoc.primer_mvvm.ui.auth
 
 import androidx.lifecycle.ViewModel
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 /**
- * #formulario #registro #viewmodel #validaciones
+ * #hu01 #formulario #registro #viewmodel #validaciones
  * ViewModel que procesa el estado del formulario de registro y ejecuta las validaciones.
  */
 class RegistroViewModel : ViewModel() {
@@ -70,7 +70,7 @@ class RegistroViewModel : ViewModel() {
     fun onRepetirPasswordChange(repetirPassword: String) = cambiarRepetirPassword(repetirPassword)
     fun cambiarAceptaTerminos(value: Boolean) = cambiarTerminos(value)
 
-    // #validaciones #registro - Proceso de validación y registro del usuario en el repositorio
+    // [HU-01] Registro de Nuevo Usuario - Valida correo corporativo, fecha de nacimiento (+18), contraseñas y términos
     fun registrar() {
         val estado = _uiState.value
         val errNombre = !validarNombre(estado.nombre)

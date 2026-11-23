@@ -1,4 +1,4 @@
-// #oportunidades #viewmodel #alertas #filtros #editar_oportunidad
+// #hu08 #hu09 #hu10 #hu12 #hu13 #hu14 #oportunidades #viewmodel #alertas #filtros #editar_oportunidad
 package cl.duoc.primer_mvvm.ui.oportunidades
 
 import androidx.lifecycle.ViewModel
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * #oportunidades #viewmodel #alertas #editar_oportunidad
+ * #hu08 #hu09 #hu10 #hu12 #hu13 #hu14 #oportunidades #viewmodel #alertas #editar_oportunidad
  * ViewModel que gestiona las oportunidades comerciales, edición, filtros, seguimiento y alertas internas.
  */
 class OportunidadesViewModel : ViewModel() {

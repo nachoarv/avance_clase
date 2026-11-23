@@ -1,4 +1,4 @@
-// #login #viewmodel #autenticacion #desactivar_usuario #palabra_clave
+// #hu02 #hu03 #hu04 #login #viewmodel #autenticacion #desactivar_usuario #palabra_clave
 package cl.duoc.primer_mvvm.ui.auth
 
 import androidx.compose.runtime.getValue
@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import cl.duoc.primer_mvvm.data.UsuarioRepository
 
 /**
- * #login #viewmodel #autenticacion #palabra_clave
+ * #hu02 #hu03 #hu04 #login #viewmodel #autenticacion #palabra_clave
  * ViewModel encargado del estado, validación de estado activo, autenticación y palabra clave de seguridad.
  */
 class LoginViewModel : ViewModel() {
@@ -24,10 +24,10 @@ class LoginViewModel : ViewModel() {
         uiState = uiState.copy(password = password, errorPassword = false, mensajeError = null)
     }
 
-    // #autenticacion #desactivar_usuario #hu27 - Validación de credenciales, estado activo y bloqueo temporal
+    // [HU-02] Inicio de Sesión Exitoso & [HU-03] Validación de Cuenta Desactivada & [HU-27] Bloqueo Temporal por Intentos Fallidos
     fun iniciarSesion(onSuccess: (String, String) -> Unit) {
         val ahora = System.currentTimeMillis()
-        if (uiState.bloqueadoHasta > ahora) {
+        if (uiState.bloqueadoHasta > ahora) { // [HU-27]
             val segundosRestantes = (uiState.bloqueadoHasta - ahora) / 1000
             uiState = uiState.copy(
                 mensajeError = "Acceso bloqueado temporalmente por intentos fallidos. Intente en ${segundosRestantes.coerceAtLeast(1)} segundos."
@@ -41,19 +41,21 @@ class LoginViewModel : ViewModel() {
         val usuario = UsuarioRepository.buscarPorCorreo(correoInput)
 
         if (usuario != null) {
-            // #desactivar_usuario - Bloquea el inicio de sesión si la cuenta está desactivada por el Admin
+            // [HU-03] Validación de Cuenta Desactivada - Bloquea el inicio de sesión si activo = false
             if (!usuario.activo) {
                 uiState = uiState.copy(
-                    mensajeError = "Su cuenta se encuentra desactivada por el Administrador. Contacte a soporte.",
+                    mensajeError = "Tu cuenta se encuentra desactivada. Contacta al administrador",
                     errorCorreo = true
                 )
                 return
             }
 
+            // [HU-02] Inicio de Sesión Exitoso
             if (usuario.password == passwordInput) {
                 uiState = uiState.copy(mensajeError = null, mostrarOpcionCambiarPassword = false, intentosFallidos = 0, bloqueadoHasta = 0L)
                 onSuccess(usuario.nombreCompleto(), usuario.rol)
             } else {
+                // [HU-27] Conteo de intentos fallidos y bloqueo por 30s
                 val nuevosIntentos = uiState.intentosFallidos + 1
                 val bloqueo = if (nuevosIntentos >= 3) ahora + 30000 else 0L
                 uiState = uiState.copy(
@@ -114,7 +116,7 @@ class LoginViewModel : ViewModel() {
         uiState = uiState.copy(palabraClaveInput = palabra, errorNuevaPassword = null)
     }
 
-    // #cambio_clave #palabra_clave - Verifica palabra clave de seguridad para cuentas privilegiadas
+    // [HU-04] Solicitud de Cambio de Contraseña - Verifica longitud, coincidencia y clave maestra para cuentas privilegiadas
     fun cambiarPassword() {
         if (uiState.nuevaPassword.length < 8) {
             uiState = uiState.copy(errorNuevaPassword = "La nueva contraseña debe tener al menos 8 caracteres")
